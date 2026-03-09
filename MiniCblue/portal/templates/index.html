@@ -1151,7 +1151,7 @@
                     </div>
                     <div>
                         <div class="brand-name">MiniCblue</div>
-                        <div class="brand-sub">Na9a's 🐪 and Shad0w's 🥷🏻 Security Hub </div>
+                        <div class="brand-sub">Blue Team Security Hub 🐪 </div>
                     </div>
                 </div>
 
@@ -1833,16 +1833,18 @@
         if (newIP !== null) {
             if (newIP.trim() === '') {
                 localStorage.removeItem('cyberblue_override_ip');
+                serverIP = window.location.hostname; // reset variable immediately
                 showNotification('Using auto-detected IP address', 'info');
                 updateIPDisplay();
-                setTimeout(() => loadTools(), 1000);
+                setTimeout(() => loadTools(), 500);
             } else {
                 const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^[a-zA-Z0-9.-]+$/;
                 if (ipPattern.test(newIP.trim())) {
                     localStorage.setItem('cyberblue_override_ip', newIP.trim());
-                    showNotification(`IP override set to: ${newIP.trim()}`, 'success');
+                    serverIP = newIP.trim(); // update variable immediately
+                    showNotification(`IP set to: ${newIP.trim()}`, 'success');
                     updateIPDisplay();
-                    setTimeout(() => loadTools(), 1000);
+                    setTimeout(() => loadTools(), 500);
                 } else {
                     showNotification('Invalid IP address format', 'error');
                 }
@@ -1851,9 +1853,19 @@
     }
 
     function updateIPDisplay() {
-        const currentIP = getServerIP();
+        const overrideIP = localStorage.getItem('cyberblue_override_ip');
+        const currentIP  = overrideIP && overrideIP.trim() !== ''
+            ? overrideIP.trim()
+            : (serverIP || window.location.hostname);
+
         const el = document.getElementById('current-ip-display');
-        if (el) el.innerHTML = `IP: ${currentIP}`;
+        if (!el) return;
+
+        // Force a repaint by briefly clearing then setting
+        el.textContent = '';
+        requestAnimationFrame(() => {
+            el.innerHTML = `<span style="font-weight:800;color:#ffffff;">${currentIP}</span>`;
+        });
     }
 
     async function detectServerIP() {
