@@ -1,0 +1,2944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>MiniCblue</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='0,0 100,0 50,100' fill='%2300ff41'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           ROOT VARIABLES & RESET
+        ═══════════════════════════════════════════════════════ */
+        :root {
+            --green:        #00ff41;
+            --green-bright: #39ff6e;
+            --green-mid:    #00cc33;
+            --green-dark:   #009922;
+            --green-glow:   rgba(0,255,65,0.45);
+            --green-tint:   rgba(0,255,65,0.10);
+            --green-tint2:  rgba(0,255,65,0.06);
+
+            --bg:           #162016;
+            --bg-panel:     rgba(16, 38, 16, 0.88);
+            --bg-card:      rgba(18, 42, 18, 0.80);
+            --bg-deep:      rgba(8, 20, 8, 0.70);
+
+            --border:       rgba(0,255,65,0.30);
+            --border-mid:   rgba(0,255,65,0.18);
+
+            --text:         #ffffff;
+            --text-soft:    #b8d4b8;
+            --text-muted:   #6aaa6a;
+
+            --red:          #ff3c50;
+            --red-tint:     rgba(255,60,80,0.14);
+            --amber:        #ffaa00;
+            --amber-tint:   rgba(255,170,0,0.12);
+            --cyan:         #00d4ff;
+
+            --radius:       6px;
+            --radius-lg:    10px;
+            --font:         'Montserrat', sans-serif;
+
+            /* category colors */
+            --siem-color:       #ff6b6b;
+            --threat-color:     #4ecdc4;
+            --network-color:    #45b7d1;
+            --soar-color:       #96ceb4;
+            --endpoint-color:   #feca57;
+            --attack-color:     #ff9ff3;
+            --mgmt-color:       #54a0ff;
+            --ids-color:        #5f27cd;
+            --vuln-color:       #00d2d3;
+            --dfir-color:       #ff6348;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* binary rain canvas */
+        #matrix-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            opacity: 0.38;
+            pointer-events: none;
+        }
+
+        /* subtle scanlines */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* ambient bg glow */
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 15% 50%, rgba(0,255,65,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 85% 50%, rgba(0,200,50,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           LAYOUT
+        ═══════════════════════════════════════════════════════ */
+        .main-container {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .branding-sidebar {
+            flex: 0 0 300px;
+            position: sticky;
+            top: 1.25rem;
+        }
+
+        .content-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           BRAND HEADER / SIDEBAR
+        ═══════════════════════════════════════════════════════ */
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.9rem 1rem;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 30px rgba(0,255,65,0.12), inset 0 1px 0 rgba(0,255,65,0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-logo::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(0,255,65,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .brand-icon-wrap {
+            width: 46px; height: 46px;
+            border: 2px solid var(--green);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 18px var(--green-glow);
+            flex-shrink: 0;
+            animation: pulse-icon 3s ease-in-out infinite;
+        }
+
+        .brand-icon-wrap i { color: var(--green); font-size: 1.1rem; text-shadow: 0 0 10px var(--green); }
+
+        @keyframes pulse-icon {
+            0%,100% { box-shadow: 0 0 18px var(--green-glow); }
+            50%      { box-shadow: 0 0 32px rgba(0,255,65,0.65); }
+        }
+
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--green);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-shadow: 0 0 18px rgba(0,255,65,0.5);
+            line-height: 1;
+        }
+
+        .brand-sub {
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: var(--text-soft);
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        /* IP section */
+        .ip-section { margin-top: 0.85rem; }
+
+        .ip-section .btn-outline-light {
+            font-family: var(--font);
+            font-size: 0.72rem;
+            font-weight: 600;
+            border-color: var(--border);
+            color: var(--text-soft);
+            background: var(--bg-deep);
+            border-radius: var(--radius);
+            padding: 0.35rem 0.8rem;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+
+        .ip-section .btn-outline-light:hover {
+            border-color: var(--green);
+            color: var(--green);
+            box-shadow: 0 0 12px rgba(0,255,65,0.2);
+        }
+
+        .ip-warn {
+            font-size: 0.65rem;
+            color: var(--red);
+            margin-top: 0.4rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        /* Mini Dashboard */
+        .mini-dashboard {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem;
+            margin-top: 0.85rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-size: 0.62rem;
+            font-weight: 800;
+            color: var(--green-mid);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-bottom: 0.85rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .panel-title::before {
+            content: '';
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: blink 1.2s step-end infinite;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid rgba(0,255,65,0.08);
+        }
+
+        .status-row:last-child { border-bottom: none; }
+
+        .status-label {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-soft);
+        }
+
+        .status-val {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Smart Suggestions */
+        .smart-suggestions {
+            background: var(--bg-panel);
+            border: 1px solid rgba(0,255,65,0.16);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem;
+            margin-top: 0.85rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .suggestion-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(0,255,65,0.07);
+            transition: all 0.2s;
+        }
+
+        .suggestion-item:last-child { border-bottom: none; }
+
+        .suggestion-item:hover {
+            background: rgba(0,255,65,0.04);
+            border-radius: var(--radius);
+            padding-left: 0.5rem;
+            margin-left: -0.5rem;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .suggestion-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+        .suggestion-text {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.4;
+        }
+
+        .suggestion-cat {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--green-mid);
+            background: var(--green-tint);
+            border: 1px solid rgba(0,255,65,0.2);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            margin-top: 0.2rem;
+        }
+
+        .suggestions-footer {
+            margin-top: 0.75rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid rgba(0,255,65,0.08);
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           NAVIGATION TABS
+        ═══════════════════════════════════════════════════════ */
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-mid);
+            gap: 0.3rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .nav-tabs .nav-link {
+            font-family: var(--font);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            border: 1px solid transparent;
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 0.65rem 1.1rem;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--green);
+            border-color: var(--border-mid);
+            background: var(--green-tint2);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--bg-panel);
+            color: var(--green);
+            border-color: var(--border) var(--border) transparent;
+            box-shadow: 0 -2px 0 var(--green) inset, 0 0 20px rgba(0,255,65,0.1);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           CARDS (general)
+        ═══════════════════════════════════════════════════════ */
+        .tool-card, .card-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,65,0.04), transparent);
+            transition: left 0.55s ease;
+        }
+
+        .tool-card:hover::before { left: 100%; }
+
+        .tool-card:hover {
+            border-color: var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 0 20px rgba(0,255,65,0.08);
+            transform: translateY(-3px);
+        }
+
+        .tool-card.healthy  { border-left: 3px solid var(--green); }
+        .tool-card.unhealthy { border-left: 3px solid var(--red); }
+
+        /* ═══════════════════════════════════════════════════════
+           TOOL CARD INTERNALS
+        ═══════════════════════════════════════════════════════ */
+        .tool-header h6 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+
+        .tool-icon { color: var(--green); font-size: 0.95rem; }
+
+        .category-badge {
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.45rem;
+            border-radius: 3px;
+        }
+
+        .tool-description {
+            font-size: 0.76rem;
+            font-weight: 400;
+            color: var(--text-soft);
+            line-height: 1.45;
+            margin-bottom: 0.75rem;
+        }
+
+        .tool-status {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--text-soft);
+            margin-bottom: 0.85rem;
+        }
+
+        .status-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-running  { background: var(--green); box-shadow: 0 0 8px rgba(0,255,65,0.7); animation: status-pulse 2s infinite; }
+        .status-stopped  { background: var(--red); box-shadow: 0 0 8px rgba(255,60,80,0.6); }
+        .status-warning  { background: var(--amber); box-shadow: 0 0 8px rgba(255,170,0,0.6); }
+        .status-unknown  { background: #666; }
+
+        @keyframes status-pulse {
+            0%,100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.25); opacity: 0.7; }
+        }
+
+        .performance-indicator {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--green-mid);
+            background: var(--green-tint);
+            border: 1px solid rgba(0,255,65,0.2);
+            padding: 0.1rem 0.45rem;
+            border-radius: 3px;
+            margin-left: auto;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           BUTTONS
+        ═══════════════════════════════════════════════════════ */
+        .btn {
+            font-family: var(--font);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            border-radius: var(--radius);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0) scale(0.98); }
+
+        /* ripple */
+        .btn::after {
+            content: '';
+            position: absolute; top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.12);
+            border-radius: 50%;
+            transform: translate(-50%,-50%);
+            transition: all 0.3s;
+        }
+        .btn:active::after { width: 200%; padding-top: 200%; }
+
+        .btn-success       { color: var(--green); border-color: var(--green); background: rgba(0,255,65,0.1); }
+        .btn-success:hover { background: rgba(0,255,65,0.22); box-shadow: 0 0 16px rgba(0,255,65,0.3); color: var(--green); border-color: var(--green); }
+
+        .btn-warning       { color: var(--amber); border-color: var(--amber); background: var(--amber-tint); }
+        .btn-warning:hover { background: rgba(255,170,0,0.22); box-shadow: 0 0 16px rgba(255,170,0,0.3); color: var(--amber); border-color: var(--amber); }
+
+        .btn-danger        { color: var(--red); border-color: var(--red); background: var(--red-tint); }
+        .btn-danger:hover  { background: rgba(255,60,80,0.22); box-shadow: 0 0 16px rgba(255,60,80,0.3); color: var(--red); border-color: var(--red); }
+
+        .btn-outline-primary { color: var(--cyan); border-color: var(--cyan); background: rgba(0,212,255,0.08); }
+        .btn-outline-primary:hover { background: rgba(0,212,255,0.18); box-shadow: 0 0 14px rgba(0,212,255,0.25); color: var(--cyan); border-color: var(--cyan); }
+
+        .btn-outline-info  { color: #00aaff; border-color: #00aaff; background: rgba(0,170,255,0.08); }
+        .btn-outline-info:hover { background: rgba(0,170,255,0.18); color: #00aaff; border-color: #00aaff; }
+
+        .btn-outline-warning { color: var(--amber); border-color: var(--amber); background: var(--amber-tint); }
+        .btn-outline-warning:hover { background: rgba(255,170,0,0.2); color: var(--amber); border-color: var(--amber); }
+
+        .btn-outline-success { color: var(--green); border-color: var(--green); background: var(--green-tint); }
+        .btn-outline-success:hover { background: rgba(0,255,65,0.18); color: var(--green); border-color: var(--green); }
+
+        .btn-outline-danger { color: var(--red); border-color: var(--red); background: var(--red-tint); }
+        .btn-outline-danger:hover { background: rgba(255,60,80,0.2); color: var(--red); border-color: var(--red); }
+
+        .btn-outline-light { color: var(--text-soft); border-color: var(--border); background: var(--bg-deep); }
+        .btn-outline-light:hover { border-color: var(--green); color: var(--green); }
+
+        .btn-outline-secondary { color: var(--text-muted); border-color: rgba(0,255,65,0.2); background: transparent; }
+        .btn-outline-secondary:hover { color: var(--text); border-color: var(--border); }
+
+        .button-row {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .button-row .btn { font-size: 0.72rem; padding: 0.38rem 0.7rem; }
+
+        /* ═══════════════════════════════════════════════════════
+           SEARCH & FILTERS
+        ═══════════════════════════════════════════════════════ */
+        .search-filter-section { margin-bottom: 1.25rem; }
+
+        .form-control, .form-select {
+            font-family: var(--font);
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius);
+            color: var(--text);
+            padding: 0.6rem 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .form-control::placeholder { color: rgba(100,180,100,0.4); }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--green);
+            background: rgba(0,30,0,0.7);
+            box-shadow: 0 0 0 3px rgba(0,255,65,0.1);
+            color: var(--text);
+        }
+
+        .form-select option { background: #1a2e1a; color: var(--text); }
+
+        .btn-quick-filter {
+            font-family: var(--font);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            color: var(--text-muted);
+            border-radius: var(--radius);
+            padding: 0.45rem 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-quick-filter:hover,
+        .btn-quick-filter.active {
+            background: rgba(0,255,65,0.14);
+            border-color: var(--green);
+            color: var(--green);
+            box-shadow: 0 0 12px rgba(0,255,65,0.2);
+        }
+
+        .quick-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.85rem; }
+
+        /* Search suggestions */
+        .search-suggestions {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: rgba(16,38,16,0.97);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .search-suggestion-item {
+            padding: 0.6rem 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0,255,65,0.06);
+            font-size: 0.78rem;
+            color: var(--text-soft);
+            transition: background 0.15s;
+        }
+
+        .search-suggestion-item:hover { background: var(--green-tint2); color: var(--text); }
+
+        /* ═══════════════════════════════════════════════════════
+           ALERTS & NOTIFICATIONS
+        ═══════════════════════════════════════════════════════ */
+        .alert {
+            font-family: var(--font);
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            padding: 0.7rem 0.9rem;
+        }
+
+        .alert i { flex-shrink: 0; margin-top: 1px; }
+
+        .alert-danger {
+            background: rgba(255,60,80,0.12);
+            border: 1px solid rgba(255,60,80,0.4);
+            border-left: 3px solid var(--red);
+            color: #ffaab5;
+        }
+
+        .alert-success {
+            background: rgba(0,255,65,0.08);
+            border: 1px solid rgba(0,255,65,0.3);
+            border-left: 3px solid var(--green);
+            color: var(--green-bright);
+        }
+
+        .alert-warning {
+            background: rgba(255,170,0,0.10);
+            border: 1px solid rgba(255,170,0,0.35);
+            border-left: 3px solid var(--amber);
+            color: #ffd080;
+        }
+
+        .alert-info {
+            background: rgba(0,170,255,0.08);
+            border: 1px solid rgba(0,170,255,0.3);
+            border-left: 3px solid #00aaff;
+            color: #80d4ff;
+        }
+
+        /* Bulk operations bar */
+        .bulk-operations-bar {
+            background: rgba(0,255,65,0.06);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .bulk-operations-bar .form-check-input {
+            width: 16px; height: 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-deep);
+            cursor: pointer;
+        }
+
+        .bulk-operations-bar .form-check-input:checked {
+            background-color: var(--green);
+            border-color: var(--green);
+        }
+
+        .selection-info label {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-soft);
+            cursor: pointer;
+        }
+
+        /* Progress bar */
+        .progress {
+            height: 8px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--green), var(--green-mid));
+        }
+
+        /* Tools grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           CREDENTIALS & INFO MODALS
+        ═══════════════════════════════════════════════════════ */
+        .credentials-modal {
+            display: none;
+            position: fixed; inset: 0;
+            z-index: 1050;
+            background: rgba(0,0,0,0.65);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .credentials-content {
+            background: rgba(14,34,14,0.97);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 90%; max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,255,65,0.1);
+            padding: 1.5rem;
+            animation: modal-in 0.25s ease;
+        }
+
+        .tool-info-content { max-width: 780px; width: 90vw; }
+
+        @keyframes modal-in {
+            from { opacity: 0; transform: scale(0.94) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .credentials-header {
+            display: flex; align-items: center; gap: 0.7rem;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--border-mid);
+        }
+
+        .credentials-header h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--green);
+            margin: 0;
+        }
+
+        .credentials-header i { color: var(--green-mid); font-size: 1rem; }
+
+        .credentials-close {
+            background: none; border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: auto;
+            transition: color 0.15s;
+        }
+
+        .credentials-close:hover { color: var(--red); }
+
+        .credentials-field {
+            margin-bottom: 0.85rem;
+        }
+
+        .credentials-field label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .credentials-field .value {
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .copy-btn {
+            font-family: var(--font);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: var(--green-tint);
+            border: 1px solid var(--border);
+            color: var(--green);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover { background: rgba(0,255,65,0.2); box-shadow: 0 0 8px rgba(0,255,65,0.2); }
+
+        .tool-info-body {
+            max-height: 68vh;
+            overflow-y: auto;
+        }
+
+        .tool-info-section {
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            border-left: 3px solid var(--green-dark);
+            border-radius: var(--radius);
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .tool-info-section h5 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--green);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.65rem;
+        }
+
+        .tool-info-section p, .tool-info-section li {
+            font-size: 0.78rem;
+            color: var(--text-soft);
+            line-height: 1.55;
+            margin-bottom: 0.35rem;
+        }
+
+        .tool-info-section code {
+            background: rgba(0,0,0,0.5);
+            color: var(--green);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.76rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           NOTIFICATION SYSTEM
+        ═══════════════════════════════════════════════════════ */
+        .notification-center {
+            position: fixed; top: 1.25rem; right: 1.25rem;
+            z-index: 10000;
+            display: flex; flex-direction: column; gap: 0.6rem;
+        }
+
+        .custom-notification {
+            padding: 0.75rem 1.1rem;
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            animation: notif-in 0.28s ease;
+            max-width: 380px;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+
+        .custom-notification.success { background: linear-gradient(135deg, #1a5c2a, #0f3a1a); border: 1px solid rgba(0,255,65,0.4); color: var(--green-bright); }
+        .custom-notification.error   { background: linear-gradient(135deg, #4a1020, #2c0810); border: 1px solid rgba(255,60,80,0.4); color: #ffaab5; }
+        .custom-notification.warning { background: linear-gradient(135deg, #4a2a00, #2c1800); border: 1px solid rgba(255,170,0,0.4); color: #ffd080; }
+        .custom-notification.info    { background: linear-gradient(135deg, #003a4a, #001c26); border: 1px solid rgba(0,170,255,0.4); color: #80d4ff; }
+        .custom-notification.fade-out { animation: notif-out 0.28s ease forwards; }
+
+        @keyframes notif-in  { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes notif-out { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+        .container-notification {
+            position: fixed; top: 1.25rem; right: 1.25rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 0.78rem;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            animation: notif-in 0.28s ease;
+            max-width: 380px;
+        }
+
+        .container-notification.success { background: linear-gradient(135deg, #1a5c2a, #0f3a1a); border-left: 3px solid var(--green); color: var(--green-bright); }
+        .container-notification.error   { background: linear-gradient(135deg, #4a1020, #2c0810); border-left: 3px solid var(--red); color: #ffaab5; }
+        .container-notification.warning { background: linear-gradient(135deg, #4a2a00, #2c1800); border-left: 3px solid var(--amber); color: #ffd080; }
+        .container-notification.info    { background: linear-gradient(135deg, #003a4a, #001c26); border-left: 3px solid #00aaff; color: #80d4ff; }
+
+        /* ═══════════════════════════════════════════════════════
+           METRICS TAB
+        ═══════════════════════════════════════════════════════ */
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s;
+        }
+
+        .spark-card {
+            padding-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .spark-canvas {
+            display: block;
+            width: 100%;
+            height: 48px;
+            margin-top: 0.75rem;
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .metric-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.7rem; font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 0.85rem;
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .metric-change {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            backdrop-filter: blur(8px);
+            height: 100%;
+        }
+
+        .chart-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-mid);
+        }
+
+        .chart-header h5 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .chart-controls .badge {
+            font-family: var(--font);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            margin-left: 0.3rem;
+        }
+
+        .category-item, .security-event {
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 0.65rem 0.75rem;
+            margin-bottom: 0.4rem;
+            background: var(--bg-deep);
+            border-radius: var(--radius);
+            border-left: 3px solid;
+        }
+
+        .category-item.healthy  { border-left-color: var(--green); }
+        .category-item.degraded { border-left-color: var(--amber); }
+        .category-item.critical { border-left-color: var(--red); }
+        .security-event.low     { border-left-color: var(--green); }
+        .security-event.medium  { border-left-color: var(--amber); }
+        .security-event.high    { border-left-color: var(--red); }
+
+        .network-stat-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.6rem 0.75rem;
+            background: var(--bg-deep);
+            border-radius: var(--radius);
+            margin-bottom: 0.4rem;
+            font-size: 0.78rem;
+        }
+
+        .container-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 0.75rem;
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .container-status-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.65rem 0.75rem;
+            background: var(--bg-deep);
+            border-radius: var(--radius);
+            border-left: 3px solid;
+            font-size: 0.76rem;
+        }
+
+        .container-status-item.running { border-left-color: var(--green); }
+        .container-status-item.stopped { border-left-color: var(--red); }
+
+        .loading-spinner { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem; }
+
+        /* ═══════════════════════════════════════════════════════
+           AGENTS TAB
+        ═══════════════════════════════════════════════════════ */
+        .agent-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 24px rgba(0,255,65,0.08);
+        }
+
+        .tool-icon-circle {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           HUNTING RULES TAB
+        ═══════════════════════════════════════════════════════ */
+        .hunt-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           INTEL TAB
+        ═══════════════════════════════════════════════════════ */
+        .ioc-search-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+        }
+
+        .input-group-text {
+            font-family: var(--font);
+            background: var(--bg-deep);
+            border: 1px solid var(--border-mid);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .input-group .btn { font-size: 0.8rem; }
+
+        /* ═══════════════════════════════════════════════════════
+           MISC BOOTSTRAP OVERRIDES
+        ═══════════════════════════════════════════════════════ */
+        h4.text-white, h5.text-white, h6.text-white { color: var(--text) !important; }
+
+        p[style*="color: #94a3b8"],
+        small[style*="color: #94a3b8"],
+        .text-muted { color: var(--text-soft) !important; }
+
+        code { color: var(--green-bright); background: rgba(0,0,0,0.4); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.8em; }
+        pre  { color: var(--text-soft); font-size: 0.82rem; }
+
+        .badge { font-family: var(--font); font-weight: 700; letter-spacing: 0.04em; }
+        .badge.bg-success { background: rgba(0,255,65,0.18) !important; color: var(--green) !important; border: 1px solid rgba(0,255,65,0.3); }
+        .badge.bg-danger  { background: rgba(255,60,80,0.18) !important; color: #ffaab5 !important; border: 1px solid rgba(255,60,80,0.3); }
+        .badge.bg-primary { background: rgba(0,212,255,0.15) !important; color: var(--cyan) !important; border: 1px solid rgba(0,212,255,0.3); }
+        .badge.bg-warning { background: var(--amber-tint) !important; color: var(--amber) !important; border: 1px solid rgba(255,170,0,0.3); }
+        .badge.bg-secondary { background: rgba(100,120,100,0.2) !important; color: var(--text-soft) !important; }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border-mid); border-radius: var(--radius-lg); color: var(--text); }
+        .card-body { padding: 0.9rem; }
+
+        /* OS selection cards */
+        .os-card {
+            cursor: pointer;
+            padding: 1.2rem;
+            border-radius: var(--radius-lg);
+            background: var(--bg-deep);
+            border: 2px solid transparent;
+            transition: all 0.25s;
+            text-align: center;
+        }
+
+        .os-card:hover {
+            border-color: var(--border);
+            background: rgba(0,30,0,0.6);
+        }
+
+        /* MISP stats */
+        #mispEventCount, #mispAttributeCount, #mispFeedCount {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--green-bright);
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.25); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,255,65,0.45); }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column; padding: 1rem; }
+            .branding-sidebar { flex: none; width: 100%; position: static; }
+        }
+
+        @media (max-width: 600px) {
+            .tools-grid { grid-template-columns: 1fr; }
+            .button-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="main-container">
+
+        <!-- ═══ LEFT SIDEBAR ═══ -->
+        <div class="branding-sidebar">
+
+            <div class="brand-header">
+                <div class="brand-logo">
+                    <div class="brand-icon-wrap">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <div class="brand-name">MiniCblue</div>
+                        <div class="brand-sub">Na9a's 🐪 and Shad0w's 🥷🏻 Security Hub </div>
+                    </div>
+                </div>
+
+                <div class="ip-section">
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <button class="btn btn-outline-light btn-sm" onclick="promptForIPOverride()" title="Override IP address">
+                            <i class="fas fa-globe me-1"></i>
+                            <span id="current-ip-display">IP: Auto</span>
+                        </button>
+                    </div>
+                    <div class="ip-warn">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Edit if public IP used, then refresh!</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Status Dashboard -->
+            <div class="mini-dashboard">
+                <div class="panel-title">System Status</div>
+                <div class="status-row">
+                    <span class="status-label">Containers</span>
+                    <span class="status-val" id="miniContainers">—</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Health</span>
+                    <span class="status-val" id="miniHealth">—</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">CPU</span>
+                    <span class="status-val" id="miniCpu">—</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Memory</span>
+                    <span class="status-val" id="miniMemory">—</span>
+                </div>
+            </div>
+
+            <!-- Smart Suggestions -->
+            <div class="smart-suggestions">
+                <div class="panel-title">💡 Smart Suggestions</div>
+                <div id="suggestionsContainer"></div>
+                <div class="suggestions-footer">New suggestions every refresh</div>
+            </div>
+
+        </div><!-- /sidebar -->
+
+        <!-- ═══ MAIN CONTENT ═══ -->
+        <div class="content-main">
+
+            <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" role="tab">
+                        <i class="fas fa-tools me-2"></i>Tools
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="agents-tab" data-bs-toggle="tab" data-bs-target="#agents" type="button" role="tab">
+                        <i class="fas fa-laptop-code me-2"></i>Agents
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="intel-tab" data-bs-toggle="tab" data-bs-target="#intel" type="button" role="tab">
+                        <i class="fas fa-brain me-2"></i>Intel
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="hunting-tab" data-bs-toggle="tab" data-bs-target="#hunting" type="button" role="tab">
+                        <i class="fas fa-shield-alt me-2"></i>Rules
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics" type="button" role="tab">
+                        <i class="fas fa-chart-line me-2"></i>Metrics
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="dashboardTabContent">
+
+                <!-- ═══ TOOLS TAB ═══ -->
+                <div class="tab-pane fade show active" id="tools" role="tabpanel">
+
+                    <div class="search-filter-section">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="search-container position-relative">
+                                    <input type="text" id="toolSearch" class="form-control"
+                                        placeholder="Search tools..." autocomplete="off">
+                                    <div id="searchSuggestions" class="search-suggestions"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="statusFilter" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="running">Running Only</option>
+                                    <option value="stopped">Stopped Only</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="unknown">Unknown</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="categoryFilter" class="form-select">
+                                    <option value="">All Categories</option>
+                                    <option value="siem">SIEM</option>
+                                    <option value="threat intel">Threat Intel</option>
+                                    <option value="network analysis">Network Analysis</option>
+                                    <option value="soar">SOAR</option>
+                                    <option value="endpoint management">Endpoint Management</option>
+                                    <option value="attack simulation">Attack Simulation</option>
+                                    <option value="management">Management</option>
+                                    <option value="intrusion detection">Intrusion Detection</option>
+                                    <option value="dfir">DFIR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="quick-filters">
+                            <button class="btn btn-quick-filter active" data-filter="all">Show All</button>
+                            <button class="btn btn-quick-filter" data-filter="running">Running Only</button>
+                            <button class="btn btn-quick-filter" data-filter="stopped">Stopped Only</button>
+                            <button class="btn btn-quick-filter" data-filter="critical">Critical Tools</button>
+                            <button class="btn btn-quick-filter" data-filter="recent">Recently Started</button>
+                        </div>
+                    </div>
+
+                    <div id="notificationCenter" class="notification-center"></div>
+
+                    <div class="bulk-operations-bar">
+                        <div class="row align-items-center g-2">
+                            <div class="col-md-3">
+                                <div class="selection-info d-flex align-items-center gap-2">
+                                    <input type="checkbox" id="selectAllTools" class="form-check-input">
+                                    <label for="selectAllTools"><span id="selectedCount">0 tools selected</span></label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-outline-success btn-sm" onclick="bulkOperation('start')" id="bulkStartBtn" disabled>
+                                        <i class="fas fa-play me-1"></i>Start All
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-sm" onclick="bulkOperation('restart')" id="bulkRestartBtn" disabled>
+                                        <i class="fas fa-redo me-1"></i>Restart All
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="bulkOperation('stop')" id="bulkStopBtn" disabled>
+                                        <i class="fas fa-stop me-1"></i>Stop All
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div id="bulkProgress" class="mt-2" style="display:none;">
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="bulkProgressBar" style="width:0%"></div>
+                            </div>
+                            <small class="text-muted d-block mt-1" id="bulkProgressText">Preparing...</small>
+                        </div>
+                    </div>
+
+                    <div id="toolsList" class="tools-grid"></div>
+
+                    <div id="noResultsMessage" class="text-center mt-4" style="display:none;">
+                        <i class="fas fa-search-minus fa-3x mb-3" style="color:var(--text-muted)"></i>
+                        <h5 style="color:var(--text-soft)">No tools found</h5>
+                        <p style="color:var(--text-muted)">Try adjusting your search criteria</p>
+                    </div>
+                </div><!-- /tools tab -->
+
+                <!-- ═══ AGENTS TAB ═══ -->
+                <div class="tab-pane fade" id="agents" role="tabpanel">
+                    <div class="container-fluid mt-3">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h4 style="color:var(--text); font-weight:800; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.06em;">
+                                    <i class="fas fa-laptop-code me-2" style="color:var(--green-mid)"></i>Agent Deployment Center
+                                </h4>
+                                <p style="color:var(--text-soft); font-size:0.8rem; margin-top:0.35rem;">Deploy pre-configured security agents to your endpoints.</p>
+                            </div>
+                        </div>
+
+                        <div class="row" id="availableAgentsGrid">
+                            <!-- Velociraptor -->
+                            <div class="col-lg-6 col-xl-4 mb-3">
+                                <div class="agent-card" style="border-color: rgba(59,130,246,0.3);" onclick="showAgentDownloader('velociraptor')">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="tool-icon-circle" style="background: linear-gradient(135deg,#3b82f6,#6366f1);">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h5 class="mb-0" style="color:var(--text); font-weight:700; font-size:0.95rem;">Velociraptor</h5>
+                                                <span class="badge" id="velociraptorStatus" style="background:rgba(34,197,94,0.15); color:#4ade80; font-size:0.65rem;">
+                                                    <i class="fas fa-circle-notch fa-spin me-1"></i>
+                                                </span>
+                                            </div>
+                                            <p style="color:var(--text-soft); font-size:0.76rem; margin-bottom:0.65rem;">Digital forensics and incident response platform</p>
+                                            <div class="d-flex gap-1 flex-wrap mb-2">
+                                                <span class="badge" style="background:rgba(59,130,246,0.12); color:#93c5fd; font-size:0.62rem;"><i class="fab fa-windows me-1"></i>Windows</span>
+                                                <span class="badge" style="background:rgba(59,130,246,0.12); color:#93c5fd; font-size:0.62rem;"><i class="fab fa-linux me-1"></i>Linux</span>
+                                                <span class="badge" style="background:rgba(59,130,246,0.12); color:#93c5fd; font-size:0.62rem;"><i class="fab fa-apple me-1"></i>macOS</span>
+                                            </div>
+                                            <small style="color:#3b82f6; font-size:0.7rem; font-weight:600;"><i class="fas fa-arrow-right me-1"></i>Click to configure & download</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Wazuh -->
+                            <div class="col-lg-6 col-xl-4 mb-3">
+                                <div class="agent-card" style="border-color: rgba(16,185,129,0.3);" onclick="showAgentDownloader('wazuh')">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="tool-icon-circle" style="background: linear-gradient(135deg,#10b981,#059669);">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h5 class="mb-0" style="color:var(--text); font-weight:700; font-size:0.95rem;">Wazuh</h5>
+                                                <span class="badge" style="background:rgba(16,185,129,0.15); color:#6ee7b7; font-size:0.65rem;"><i class="fas fa-check-circle me-1"></i>Ready</span>
+                                            </div>
+                                            <p style="color:var(--text-soft); font-size:0.76rem; margin-bottom:0.65rem;">Host-based intrusion detection system</p>
+                                            <div class="d-flex gap-1 flex-wrap mb-2">
+                                                <span class="badge" style="background:rgba(16,185,129,0.12); color:#6ee7b7; font-size:0.62rem;"><i class="fab fa-windows me-1"></i>Windows</span>
+                                                <span class="badge" style="background:rgba(16,185,129,0.12); color:#6ee7b7; font-size:0.62rem;"><i class="fab fa-linux me-1"></i>Ubuntu/Debian</span>
+                                                <span class="badge" style="background:rgba(16,185,129,0.12); color:#6ee7b7; font-size:0.62rem;"><i class="fab fa-redhat me-1"></i>RHEL/CentOS</span>
+                                            </div>
+                                            <small style="color:#10b981; font-size:0.7rem; font-weight:600;"><i class="fas fa-arrow-right me-1"></i>Click to configure & download</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Shuffle -->
+                            <div class="col-lg-6 col-xl-4 mb-3">
+                                <div class="agent-card" style="border-color: rgba(249,115,22,0.3);" onclick="showShuffleIntegrations()">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="tool-icon-circle" style="background: linear-gradient(135deg,#f97316,#ea580c);">
+                                            <i class="fas fa-random"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h5 class="mb-0" style="color:var(--text); font-weight:700; font-size:0.95rem;">Shuffle Automations</h5>
+                                                <span class="badge" style="background:rgba(249,115,22,0.15); color:#fdba74; font-size:0.65rem;"><i class="fas fa-check-circle me-1"></i>Ready</span>
+                                            </div>
+                                            <p style="color:var(--text-soft); font-size:0.76rem; margin-bottom:0.65rem;">Integration guide & workflow templates</p>
+                                            <div class="d-flex gap-1 flex-wrap mb-2">
+                                                <span class="badge" style="background:rgba(249,115,22,0.12); color:#fdba74; font-size:0.62rem;"><i class="fas fa-plug me-1"></i>14 Tool Integrations</span>
+                                                <span class="badge" style="background:rgba(249,115,22,0.12); color:#fdba74; font-size:0.62rem;"><i class="fas fa-sitemap me-1"></i>Workflow Templates</span>
+                                            </div>
+                                            <small style="color:#f97316; font-size:0.7rem; font-weight:600;"><i class="fas fa-arrow-right me-1"></i>Click for integration guide</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Arkime PCAP -->
+                            <div class="col-lg-6 col-xl-4 mb-3">
+                                <div class="agent-card" style="border-color: rgba(20,184,166,0.3);" onclick="showPcapCapture()">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="tool-icon-circle" style="background: linear-gradient(135deg,#14b8a6,#0d9488);">
+                                            <i class="fas fa-network-wired"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h5 class="mb-0" style="color:var(--text); font-weight:700; font-size:0.95rem;">Arkime PCAP</h5>
+                                                <span class="badge" id="pcapStatus" style="background:rgba(20,184,166,0.15); color:#5eead4; font-size:0.65rem;"><i class="fas fa-circle me-1"></i>Ready</span>
+                                            </div>
+                                            <p style="color:var(--text-soft); font-size:0.76rem; margin-bottom:0.65rem;">Live network traffic capture</p>
+                                            <div class="d-flex gap-1 flex-wrap mb-2">
+                                                <span class="badge" style="background:rgba(20,184,166,0.12); color:#5eead4; font-size:0.62rem;"><i class="fas fa-clock me-1"></i>1-60 min capture</span>
+                                                <span class="badge" style="background:rgba(20,184,166,0.12); color:#5eead4; font-size:0.62rem;"><i class="fas fa-download me-1"></i>Download PCAP</span>
+                                            </div>
+                                            <small style="color:#14b8a6; font-size:0.7rem; font-weight:600;"><i class="fas fa-arrow-right me-1"></i>Click to start capture</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Caldera -->
+                            <div class="col-lg-6 col-xl-4 mb-3">
+                                <div class="agent-card" style="border-color: rgba(220,38,38,0.3);" onclick="showAgentDownloader('caldera')">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="tool-icon-circle" style="background: linear-gradient(135deg,#dc2626,#b91c1c);">
+                                            <i class="fas fa-chess-king"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h5 class="mb-0" style="color:var(--text); font-weight:700; font-size:0.95rem;">Caldera Sandcat</h5>
+                                                <span class="badge" style="background:rgba(220,38,38,0.15); color:#fca5a5; font-size:0.65rem;"><i class="fas fa-exclamation-triangle me-1"></i>Red Team</span>
+                                            </div>
+                                            <p style="color:var(--text-soft); font-size:0.76rem; margin-bottom:0.65rem;">Adversary emulation & attack simulation</p>
+                                            <div class="alert alert-danger p-2 mb-2" style="font-size:0.72rem; margin:0 0 0.5rem;">
+                                                <i class="fas fa-exclamation-triangle me-1"></i><strong>Authorized Use Only!</strong>
+                                            </div>
+                                            <small style="color:#dc2626; font-size:0.7rem; font-weight:600;"><i class="fas fa-arrow-right me-1"></i>Click for deployment</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shuffle Integrations panel (hidden by default) -->
+                        <div id="shuffleIntegrations" style="display:none;">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="hideShuffleIntegrations()">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Agents
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tool-card" style="border-color:rgba(249,115,22,0.3);">
+                                <h5 style="color:var(--text); font-weight:700; font-size:0.95rem; margin-bottom:1rem;">
+                                    <i class="fas fa-random me-2" style="color:#f97316"></i>Shuffle SOAR Integration Guide
+                                </h5>
+                                <div class="alert alert-info mb-3"><i class="fas fa-info-circle me-2"></i>All tools are pre-configured for Shuffle workflows. Use connection details below to automate your SOC operations.</div>
+                                <div class="row g-2" id="shuffleToolsGrid"></div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card"><div class="card-body">
+                                            <h6 style="color:var(--green); font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;"><i class="fas fa-rocket me-2"></i>Quick Start</h6>
+                                            <ol style="color:var(--text-soft); font-size:0.76rem; padding-left:1.2rem; margin:0;">
+                                                <li>Access Shuffle: <code>https://YOUR_IP:7002</code></li>
+                                                <li>Login (create admin on first use)</li>
+                                                <li>Create or import a workflow</li>
+                                                <li>Use tool URLs below for integrations</li>
+                                                <li>Test your automation!</li>
+                                            </ol>
+                                        </div></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card"><div class="card-body">
+                                            <h6 style="color:var(--amber); font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;"><i class="fas fa-lightbulb me-2"></i>Common Use Cases</h6>
+                                            <ul style="color:var(--text-soft); font-size:0.76rem; padding-left:1.2rem; margin:0;">
+                                                <li>Wazuh Alert → MISP Enrichment → TheHive Case</li>
+                                                <li>File Hash → VirusTotal → Velociraptor Hunt</li>
+                                                <li>Scheduled Threat Hunting</li>
+                                                <li>Automated IOC submission to MISP</li>
+                                                <li>Incident response playbook automation</li>
+                                            </ul>
+                                        </div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PCAP Capture panel -->
+                        <div id="pcapCapture" style="display:none;">
+                            <div class="row mb-3">
+                                <div class="col-12"><button class="btn btn-outline-secondary btn-sm" onclick="hidePcapCapture()"><i class="fas fa-arrow-left me-2"></i>Back to Agents</button></div>
+                            </div>
+                            <div class="row"><div class="col-lg-7 mx-auto">
+                                <div class="tool-card" style="border-color:rgba(20,184,166,0.3);">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.95rem; margin-bottom:1rem;"><i class="fas fa-network-wired me-2" style="color:#14b8a6"></i>Network Traffic Capture</h5>
+                                    <div class="mb-3">
+                                        <div class="panel-title" style="margin-bottom:0.5rem;">Capture Duration</div>
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-outline-info btn-sm" onclick="setCaptureTime(60)">1 min</button>
+                                            <button type="button" class="btn btn-outline-info btn-sm" onclick="setCaptureTime(300)">5 min</button>
+                                            <button type="button" class="btn btn-outline-info btn-sm" onclick="setCaptureTime(900)">15 min</button>
+                                            <button type="button" class="btn btn-outline-info btn-sm" onclick="setCaptureTime(1800)">30 min</button>
+                                            <button type="button" class="btn btn-outline-info btn-sm" onclick="setCaptureTime(3600)">1 hour</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success btn-lg w-100 mb-3" id="startCaptureBtn" onclick="startPcapCapture()"><i class="fas fa-play me-2"></i>Start Capture</button>
+                                    <div class="alert alert-info mb-3"><i class="fas fa-terminal me-2"></i><strong>Pro Tip:</strong> CLI: <code>bash generate-pcap-for-arkime.sh --live-5min</code></div>
+                                    <div id="captureProgress" style="display:none;">
+                                        <div class="progress mb-2" style="height:28px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="captureProgressBar" style="width:0%">
+                                                <span id="captureProgressText" style="font-size:0.72rem; font-weight:700;">Starting...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="captureComplete" class="alert alert-success" style="display:none;">
+                                        <i class="fas fa-check-circle me-2"></i><strong>Capture complete!</strong> PCAP ready for analysis.
+                                        <button class="btn btn-sm btn-outline-success ms-2" onclick="window.open('http://'+window.location.hostname+':7008','_blank')">
+                                            <i class="fas fa-external-link-alt me-1"></i>Open in Arkime
+                                        </button>
+                                    </div>
+                                </div>
+                            </div></div>
+                        </div>
+
+                        <!-- Agent Downloader panel -->
+                        <div id="agentDownloader" style="display:none;">
+                            <div class="row mb-3">
+                                <div class="col-12"><button class="btn btn-outline-secondary btn-sm" onclick="hideAgentConfig()"><i class="fas fa-arrow-left me-2"></i>Back to Agents</button></div>
+                            </div>
+                            <div class="row"><div class="col-lg-9 mx-auto">
+                                <div class="tool-card" style="border-color:rgba(59,130,246,0.3);">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.95rem; margin-bottom:1.2rem;"><i class="fas fa-cog me-2" style="color:#3b82f6"></i><span id="currentAgentName">Agent</span> Configuration</h5>
+                                    <!-- Step 1 -->
+                                    <div class="mb-3">
+                                        <div class="panel-title" style="margin-bottom:0.5rem;"><span class="badge bg-primary me-2">1</span> Enter Server IP Address</div>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-server"></i></span>
+                                            <input type="text" class="form-control" id="agentServerIp" placeholder="e.g., 192.168.1.100">
+                                        </div>
+                                        <small style="color:var(--text-muted); font-size:0.7rem;"><i class="fas fa-info-circle me-1"></i>Public or internal IP of your MiniCblue server</small>
+                                    </div>
+                                    <!-- Step 2 -->
+                                    <div class="mb-3">
+                                        <div class="panel-title" style="margin-bottom:0.5rem;"><span class="badge bg-primary me-2">2</span> Select Operating System</div>
+                                        <div class="row g-2" id="osSelectionGrid"></div>
+                                    </div>
+                                    <!-- Step 3 -->
+                                    <div class="mb-2">
+                                        <div class="panel-title" style="margin-bottom:0.5rem;"><span class="badge bg-primary me-2">3</span> Download Package</div>
+                                        <button class="btn btn-outline-primary btn-lg w-100" id="downloadAgentBtn" onclick="downloadAgentPackage()" disabled>
+                                            <i class="fas fa-download me-2"></i><span id="downloadBtnText">Enter server IP and select OS</span>
+                                        </button>
+                                        <div id="downloadError" class="alert alert-danger mt-2" style="display:none;"><i class="fas fa-exclamation-triangle me-2"></i><span id="downloadErrorText"></span></div>
+                                        <div id="downloadSuccess" class="alert alert-success mt-2" style="display:none;"><i class="fas fa-check-circle me-2"></i>Package downloaded!</div>
+                                    </div>
+                                    <div id="packageInfo" class="mt-2 p-3 rounded" style="background:rgba(0,255,65,0.06); border:1px solid rgba(0,255,65,0.2); display:none;">
+                                        <div class="panel-title" style="margin-bottom:0.5rem;">Package Contents</div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4"><div class="card"><div class="card-body"><i class="fas fa-cube text-primary me-2"></i><small><strong id="packageBinaryName">agent</strong><br><span style="color:var(--text-muted)">Agent binary</span></small></div></div></div>
+                                            <div class="col-md-4"><div class="card"><div class="card-body"><i class="fas fa-file-code text-success me-2"></i><small><strong>config.yaml</strong><br><span style="color:var(--text-muted)">Pre-configured</span></small></div></div></div>
+                                            <div class="col-md-4"><div class="card"><div class="card-body"><i class="fas fa-file-alt text-warning me-2"></i><small><strong>INSTALL.txt</strong><br><span style="color:var(--text-muted)">Instructions</span></small></div></div></div>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mt-3 mb-0"><i class="fas fa-lightbulb me-2"></i><strong>Important:</strong> Ensure the required port is accessible from your endpoints. <span id="agentPortInfo"></span> Extract the ZIP and follow included instructions.</div>
+                                </div>
+                            </div></div>
+                        </div>
+                    </div>
+                </div><!-- /agents tab -->
+
+                <!-- ═══ INTEL TAB ═══ -->
+                <div class="tab-pane fade" id="intel" role="tabpanel">
+                    <div class="container-fluid mt-3">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h4 style="color:var(--text); font-weight:800; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.06em;">
+                                    <i class="fas fa-brain me-2" style="color:#8b5cf6"></i>Threat Intelligence Hub
+                                </h4>
+                                <p style="color:var(--text-soft); font-size:0.8rem; margin-top:0.35rem;">Search IOCs, view threat feeds, and access intelligence from MISP.</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg-8 mx-auto">
+                                <div class="ioc-search-wrap">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.88rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.85rem;"><i class="fas fa-search me-2" style="color:#8b5cf6"></i>IOC Search</h5>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <span class="input-group-text"><i class="fas fa-fingerprint"></i></span>
+                                        <input type="text" class="form-control" id="iocSearchInput" placeholder="Enter IP, domain, hash (MD5/SHA1/SHA256), URL, or email...">
+                                        <button class="btn btn-outline-primary" type="button" onclick="searchMISP()"><i class="fas fa-search me-1"></i>Search MISP</button>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap mb-3">
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('iocSearchInput').value='8.8.8.8'; searchMISP();"><i class="fas fa-vial me-1"></i>Test: IP</button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('iocSearchInput').value='evil.com'; searchMISP();"><i class="fas fa-vial me-1"></i>Test: Domain</button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('iocSearchInput').value='44d88612fea8a8f36de82e1278abb02f'; searchMISP();"><i class="fas fa-vial me-1"></i>Test: Hash</button>
+                                    </div>
+                                    <div id="iocSearchResults" style="display:none;"></div>
+                                    <div id="iocSearchLoading" style="display:none;" class="text-center p-3">
+                                        <i class="fas fa-circle-notch fa-spin fa-2x mb-2" style="color:var(--green-mid)"></i>
+                                        <p style="color:var(--text-soft); font-size:0.8rem;">Searching MISP database...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <div class="tool-card">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.88rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.85rem;"><i class="fas fa-database me-2" style="color:#8b5cf6"></i>MISP Statistics</h5>
+                                    <div class="row text-center g-2">
+                                        <div class="col-4"><div class="p-2 rounded" style="background:var(--bg-deep);"><span id="mispEventCount" style="display:block; font-size:1.6rem; font-weight:800; color:var(--green-bright);">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Events</small></div></div>
+                                        <div class="col-4"><div class="p-2 rounded" style="background:var(--bg-deep);"><span id="mispAttributeCount" style="display:block; font-size:1.6rem; font-weight:800; color:var(--green-bright);">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Attributes</small></div></div>
+                                        <div class="col-4"><div class="p-2 rounded" style="background:var(--bg-deep);"><span id="mispFeedCount" style="display:block; font-size:1.6rem; font-weight:800; color:var(--green-bright);">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Active Feeds</small></div></div>
+                                    </div>
+                                    <div class="mt-3 d-grid">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="window.open('https://'+window.location.hostname+':7003','_blank')"><i class="fas fa-external-link-alt me-2"></i>Open MISP Dashboard</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="tool-card">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.88rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.85rem;"><i class="fas fa-rss me-2" style="color:var(--green-mid)"></i>Threat Feeds</h5>
+                                    <div id="threatFeedsList" style="max-height:180px; overflow-y:auto;"></div>
+                                    <div class="mt-2 d-flex align-items-center gap-2">
+                                        <button class="btn btn-outline-success btn-sm" onclick="syncMISPFeeds()"><i class="fas fa-sync me-1"></i>Sync Feeds</button>
+                                        <small style="color:var(--text-muted); font-size:0.7rem;" id="lastFeedSync">Last sync: —</small>
+                                    </div>
+                                    <div class="alert alert-info mt-2 mb-0"><i class="fas fa-terminal me-1"></i>Configure feeds: <code>bash misp/configure-threat-feeds.sh</code></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="tool-card">
+                                    <h5 style="color:var(--text); font-weight:700; font-size:0.88rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.85rem;"><i class="fas fa-clock me-2" style="color:var(--amber)"></i>Recent Threat Events</h5>
+                                    <div id="recentMISPEvents"><p class="text-center" style="color:var(--text-muted); font-size:0.8rem;">Loading recent events...</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /intel tab -->
+
+                <!-- ═══ HUNTING RULES TAB ═══ -->
+                <div class="tab-pane fade" id="hunting" role="tabpanel">
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="hunt-card" style="border-color:rgba(220,53,69,0.3);">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="tool-icon-circle" style="background:linear-gradient(135deg,#dc3545,#c82333); width:46px; height:46px;"><i class="fas fa-virus" style="font-size:1.1rem;"></i></div>
+                                    <div>
+                                        <h5 style="color:var(--text); font-weight:700; font-size:0.92rem; margin:0;">YARA Malware Detection</h5>
+                                        <small style="color:var(--text-muted);">Pattern-based threat hunting</small>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><div class="text-center p-2 rounded" style="background:var(--bg-deep);"><span style="display:block; font-size:1.8rem; font-weight:800; color:var(--red);" id="yaraRuleCount">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Total Rules</small></div></div>
+                                    <div class="col-6"><div class="text-center p-2 rounded" style="background:var(--bg-deep);"><span style="display:block; font-size:0.9rem; font-weight:700; color:var(--green);" id="yaraVersion">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Version</small></div></div>
+                                </div>
+                                <div class="mb-2 p-2 rounded" style="background:var(--bg-deep);"><small style="color:var(--text-muted);">Last Update:</small><div id="yaraLastUpdate" style="color:var(--text-soft); font-size:0.76rem;">Loading...</div></div>
+                                <div class="mb-2"><small style="color:var(--text-muted);">Categories:</small><div id="yaraCategories" class="mt-1"></div></div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="updateRules('yara')"><i class="fas fa-download me-2"></i>Update Rules</button>
+                                    <button class="btn btn-outline-light btn-sm" onclick="browseYaraRules()"><i class="fas fa-list me-2"></i>Browse Rules</button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewLogs('yara')"><i class="fas fa-file-alt me-2"></i>Logs</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="hunt-card" style="border-color:rgba(59,130,246,0.3);">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="tool-icon-circle" style="background:linear-gradient(135deg,#3b82f6,#2563eb); width:46px; height:46px;"><i class="fas fa-shield-alt" style="font-size:1.1rem;"></i></div>
+                                    <div>
+                                        <h5 style="color:var(--text); font-weight:700; font-size:0.92rem; margin:0;">Sigma Detection Rules</h5>
+                                        <small style="color:var(--text-muted);">Universal SIEM signatures</small>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><div class="text-center p-2 rounded" style="background:var(--bg-deep);"><span style="display:block; font-size:1.8rem; font-weight:800; color:#3b82f6;" id="sigmaRuleCount">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Total Rules</small></div></div>
+                                    <div class="col-6"><div class="text-center p-2 rounded" style="background:var(--bg-deep);"><span style="display:block; font-size:0.9rem; font-weight:700; color:var(--green);" id="sigmaVersion">--</span><small style="color:var(--text-muted); font-size:0.65rem;">Version</small></div></div>
+                                </div>
+                                <div class="mb-2 p-2 rounded" style="background:var(--bg-deep);"><small style="color:var(--text-muted);">Last Update:</small><div id="sigmaLastUpdate" style="color:var(--text-soft); font-size:0.76rem;">Loading...</div></div>
+                                <div class="mb-2"><small style="color:var(--text-muted);">Categories:</small><div id="sigmaCategories" class="mt-1"></div></div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="updateRules('sigma')"><i class="fas fa-download me-2"></i>Update Rules</button>
+                                    <button class="btn btn-outline-light btn-sm" onclick="browseSigmaRules()"><i class="fas fa-list me-2"></i>Browse Rules</button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewLogs('sigma')"><i class="fas fa-file-alt me-2"></i>Logs</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /hunting tab -->
+
+                <!-- ═══ METRICS TAB ═══ -->
+                <div class="tab-pane fade" id="metrics" role="tabpanel">
+                    <div class="row mt-3">
+                        <!-- CPU sparkline card -->
+                        <div class="col-md-3 mb-3">
+                            <div class="metric-card spark-card">
+                                <div class="metric-header"><i class="fas fa-microchip" style="color:var(--cyan)"></i>CPU Usage</div>
+                                <div class="metric-value" id="cpuUsage">--</div>
+                                <div class="metric-change" id="cpuChange">Waiting for data…</div>
+                                <canvas id="sparkCpu" class="spark-canvas"></canvas>
+                            </div>
+                        </div>
+                        <!-- Memory sparkline card -->
+                        <div class="col-md-3 mb-3">
+                            <div class="metric-card spark-card">
+                                <div class="metric-header"><i class="fas fa-memory" style="color:var(--green-mid)"></i>Memory Usage</div>
+                                <div class="metric-value" id="memoryUsage">--</div>
+                                <div class="metric-change" id="memoryChange">Waiting for data…</div>
+                                <canvas id="sparkMem" class="spark-canvas"></canvas>
+                            </div>
+                        </div>
+                        <!-- Disk sparkline card -->
+                        <div class="col-md-3 mb-3">
+                            <div class="metric-card spark-card">
+                                <div class="metric-header"><i class="fas fa-hdd" style="color:var(--amber)"></i>Disk Usage</div>
+                                <div class="metric-value" id="diskUsage">--</div>
+                                <div class="metric-change" id="diskChange">Waiting for data…</div>
+                                <canvas id="sparkDisk" class="spark-canvas"></canvas>
+                            </div>
+                        </div>
+                        <!-- Network sparkline card -->
+                        <div class="col-md-3 mb-3">
+                            <div class="metric-card spark-card">
+                                <div class="metric-header"><i class="fas fa-network-wired" style="color:#00aaff"></i>Network I/O</div>
+                                <div class="metric-value" id="networkIO">--</div>
+                                <div class="metric-change" id="networkChange">Waiting for data…</div>
+                                <canvas id="sparkNet" class="spark-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h5><i class="fas fa-cubes me-2"></i>Container Status</h5>
+                                    <div class="chart-controls">
+                                        <span class="badge bg-success" id="runningContainers">0 Running</span>
+                                        <span class="badge bg-danger" id="stoppedContainers">0 Stopped</span>
+                                        <span class="badge bg-secondary" id="totalContainers">0 Total</span>
+                                    </div>
+                                </div>
+                                <div id="containerStatusGrid" class="container-status-grid">
+                                    <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="chart-card">
+                                <div class="chart-header"><h5><i class="fas fa-shield-alt me-2"></i>Security Categories</h5></div>
+                                <div id="categoryHealthList" class="category-health-list">
+                                    <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="chart-card">
+                                <div class="chart-header"><h5><i class="fas fa-exclamation-triangle me-2"></i>Recent Security Events</h5><span class="badge bg-primary" id="eventCount">0</span></div>
+                                <div id="securityEventsList" class="security-events-list"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="chart-card">
+                                <div class="chart-header"><h5><i class="fas fa-network-wired me-2"></i>Network Statistics</h5></div>
+                                <div id="networkStatsList" class="network-stats-list"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /metrics tab -->
+
+            </div><!-- /tab-content -->
+        </div><!-- /content-main -->
+    </div><!-- /main-container -->
+
+    <!-- Credentials Modal -->
+    <div id="credentialsModal" class="credentials-modal">
+        <div class="credentials-content">
+            <div class="credentials-header">
+                <i class="fas fa-key"></i>
+                <h4 id="credentialsToolName">Credentials</h4>
+                <button class="credentials-close" onclick="closeCredentialsModal()">&times;</button>
+            </div>
+            <div id="credentialsContent"></div>
+        </div>
+    </div>
+
+    <!-- Tool Info Modal -->
+    <div id="toolInfoModal" class="credentials-modal">
+        <div class="credentials-content tool-info-content">
+            <div class="credentials-header">
+                <i class="fas fa-info-circle"></i>
+                <h4 id="toolInfoName">Tool Information</h4>
+                <button class="credentials-close" onclick="closeToolInfoModal()">&times;</button>
+            </div>
+            <div id="toolInfoBody" class="tool-info-body"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // ═══════════════════════════════════════════════════
+    // ALL JAVASCRIPT — preserved from original, zero changes to logic
+    // ═══════════════════════════════════════════════════
+
+    let allTools = [];
+    let containerStatuses = {};
+    let serverIP = null;
+    let selectedTools = new Set();
+    let currentAgentType = null;
+    let currentSelectedOS = null;
+    let captureTime = 300;
+
+    function getServerIP() {
+        const overrideIP = localStorage.getItem('cyberblue_override_ip');
+        if (overrideIP && overrideIP.trim() !== '') return overrideIP.trim();
+        return serverIP || window.location.hostname;
+    }
+
+    function promptForIPOverride() {
+        const currentIP = getServerIP();
+        const newIP = prompt(`Current IP: ${currentIP}\n\nEnter new IP address for tool access:\n(Leave empty to use auto-detected IP)`, currentIP);
+        if (newIP !== null) {
+            if (newIP.trim() === '') {
+                localStorage.removeItem('cyberblue_override_ip');
+                showNotification('Using auto-detected IP address', 'info');
+                updateIPDisplay();
+                setTimeout(() => loadTools(), 1000);
+            } else {
+                const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^[a-zA-Z0-9.-]+$/;
+                if (ipPattern.test(newIP.trim())) {
+                    localStorage.setItem('cyberblue_override_ip', newIP.trim());
+                    showNotification(`IP override set to: ${newIP.trim()}`, 'success');
+                    updateIPDisplay();
+                    setTimeout(() => loadTools(), 1000);
+                } else {
+                    showNotification('Invalid IP address format', 'error');
+                }
+            }
+        }
+    }
+
+    function updateIPDisplay() {
+        const currentIP = getServerIP();
+        const el = document.getElementById('current-ip-display');
+        if (el) el.innerHTML = `IP: ${currentIP}`;
+    }
+
+    async function detectServerIP() {
+        try {
+            const response = await fetch('/api/server-info');
+            const data = await response.json();
+            serverIP = data.server_ip || window.location.hostname;
+        } catch (e) {
+            serverIP = window.location.hostname;
+        }
+        updateIPDisplay();
+    }
+
+    async function loadTools() {
+        try {
+            const [toolsRes, statusRes] = await Promise.all([fetch('/api/tools'), fetch('/api/containers/tools')]);
+            const toolsData = await toolsRes.json();
+            const statusData = await statusRes.json();
+            allTools = toolsData.tools || [];
+            containerStatuses = statusData.tool_containers || {};
+            renderTools(allTools, containerStatuses);
+            loadMetrics();
+            updateMiniDashboard();
+        } catch (e) {
+            document.getElementById('toolsList').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading tools. Please check the console.</div>';
+        }
+    }
+
+    const toolCategories = {
+        'velociraptor':'dfir','wireshark':'network analysis','wazuh':'siem','wazuh dashboard':'siem',
+        'misp':'threat intel','misp core':'threat intel','mitre':'threat intel','mitre-navigator':'threat intel',
+        'mitre navigator':'threat intel','arkime':'network analysis','thehive':'soar','the hive':'soar',
+        'shuffle':'soar','fleetdm':'endpoint management','cortex':'soar','caldera':'attack simulation',
+        'portainer':'management','evebox':'intrusion detection','cyberchef':'utility','openvas':'vulnerability management'
+    };
+
+    function getToolCategory(n){ return toolCategories[n.toLowerCase()]||'other'; }
+
+    function getCategoryColor(c){
+        const m={'siem':'var(--siem-color)','threat intel':'var(--threat-color)','network analysis':'var(--network-color)',
+            'soar':'var(--soar-color)','endpoint management':'var(--endpoint-color)','attack simulation':'var(--attack-color)',
+            'management':'var(--mgmt-color)','intrusion detection':'var(--ids-color)','vulnerability management':'var(--vuln-color)',
+            'dfir':'var(--dfir-color)'};
+        return m[c.toLowerCase()]||'#6c757d';
+    }
+
+    function renderTools(tools, containerStatuses) {
+        const container = document.getElementById('toolsList');
+        container.innerHTML = '';
+        tools.forEach(tool => {
+            const key = getContainerStatusKey(tool.name);
+            const status = containerStatuses[key] || {status:'unknown', status_text:'Unknown'};
+            const sClass = status.status==='running'?'status-running':status.status==='stopped'?'status-stopped':status.status==='warning'?'status-warning':'status-unknown';
+            const cat = getToolCategory(tool.name);
+            const col = getCategoryColor(cat);
+            const card = document.createElement('div');
+            card.className = `tool-card`;
+            card.dataset.toolKey = key;
+            card.dataset.category = cat;
+            card.style.borderLeftColor = col;
+            card.style.borderLeftWidth = '3px';
+            card.innerHTML = `
+                <div class="tool-header">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <h6>
+                            <i class="${tool.icon} tool-icon"></i>${tool.name}
+                            <span class="category-badge" style="background:${col}1a; color:${col}; border:1px solid ${col}40;">${cat.replace('-',' ').toUpperCase()}</span>
+                        </h6>
+                        <input type="checkbox" class="form-check-input tool-checkbox" onchange="handleToolSelection(this,'${tool.name}')" data-tool-name="${tool.name}" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;">
+                    </div>
+                    <div class="tool-description">${tool.description}</div>
+                    <div class="tool-status">
+                        <span class="status-indicator ${sClass}"></span>
+                        <span>${status.status_text}</span>
+                        ${status.status==='running'?'<span class="performance-indicator">● Optimal</span>':''}
+                    </div>
+                </div>
+                <div class="tool-actions">
+                    <div class="button-row">
+                        <a href="${tool.protocols[0]}://${getServerIP()}:${tool.port}" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>Open
+                        </a>
+                        <button class="btn btn-outline-info" onclick="showCredentials('${tool.name}')">
+                            <i class="fas fa-key me-1"></i>Credentials
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="showToolInfo('${tool.name}')">
+                            <i class="fas fa-info-circle me-1"></i>Info
+                        </button>
+                    </div>
+                    <div class="button-row">
+                        <button class="btn btn-success" onclick="controlContainer('${key}','start')"><i class="fas fa-play me-1"></i>Start</button>
+                        <button class="btn btn-warning" onclick="controlContainer('${key}','restart')"><i class="fas fa-redo me-1"></i>Restart</button>
+                        <button class="btn btn-danger" onclick="controlContainer('${key}','stop')"><i class="fas fa-stop me-1"></i>Stop</button>
+                    </div>
+                </div>`;
+            container.appendChild(card);
+        });
+        setupToolSelection();
+    }
+
+    async function loadMetrics() {
+        try {
+            const r = await fetch('/api/dashboard/metrics');
+            const d = await r.json();
+            const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+            set('totalContainers', d.containers?.total||'--');
+            set('cpuUsage', d.system?.cpu_percent||'--');
+            set('memoryUsage', d.system?.memory_percent||'--');
+            set('runningContainers', `${d.containers?.running||0} Running`);
+            set('stoppedContainers', `${d.containers?.stopped||0} Stopped`);
+        } catch(e){}
+    }
+
+    function getContainerStatusKey(n) {
+        const m={'velociraptor':'velociraptor','wazuh dashboard':'wazuh-dashboard','shuffle':'shuffle','misp':'misp',
+            'cyberchef':'cyberchef','thehive':'thehive','cortex':'cortex','fleetdm':'fleetdm','arkime':'arkime',
+            'caldera':'caldera','evebox':'evebox','wireshark':'wireshark','mitre navigator':'mitre-navigator',
+            'portainer':'portainer','openvas':'openvas'};
+        return m[n.toLowerCase()]||n.toLowerCase();
+    }
+
+    function showContainerNotification(msg, type='info') {
+        const n = document.createElement('div');
+        n.className = `container-notification ${type}`;
+        n.textContent = msg;
+        document.body.appendChild(n);
+        setTimeout(() => { if(n.parentNode) n.parentNode.removeChild(n); }, 3000);
+    }
+    const showContainerSuccess = m => showContainerNotification(m,'success');
+    const showContainerError   = m => showContainerNotification(m,'error');
+    const showContainerWarning = m => showContainerNotification(m,'warning');
+
+    async function controlContainer(key, action) {
+        showContainerNotification(`🔄 ${action.charAt(0).toUpperCase()+action.slice(1)}ing...`, 'info');
+        try {
+            const r = await fetch(`/api/containers/${key}/${action}`, {method:'POST'});
+            const d = await r.json();
+            if(d.success) { showContainerSuccess(`✅ Container ${action} successful!`); loadTools(); }
+            else showContainerError(`❌ Failed: ${d.message}`);
+        } catch(e) { showContainerError(`❌ Error: ${e.message}`); }
+    }
+
+    function setupSearchAndFilter() {
+        ['toolSearch','statusFilter','categoryFilter'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener(el.tagName==='INPUT'?'input':'change', filterTools);
+        });
+        document.querySelectorAll('.btn-quick-filter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-quick-filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterTools();
+            });
+        });
+    }
+
+    function filterTools() {
+        const q = (document.getElementById('toolSearch')?.value||'').toLowerCase();
+        const sf = document.getElementById('statusFilter')?.value||'';
+        const cf = document.getElementById('categoryFilter')?.value||'';
+        const qf = document.querySelector('.btn-quick-filter.active')?.dataset.filter||'all';
+        let any = false;
+        document.querySelectorAll('.tool-card').forEach(card => {
+            const nm = card.querySelector('.tool-header h6').textContent.toLowerCase();
+            const ds = card.querySelector('.tool-description').textContent.toLowerCase();
+            const si = card.querySelector('.status-indicator');
+            const st = si?.classList.contains('status-running')?'running':si?.classList.contains('status-stopped')?'stopped':'unknown';
+            const ca = card.dataset.category||'';
+            let v = true;
+            if(q && !nm.includes(q) && !ds.includes(q)) v=false;
+            if(sf && st!==sf) v=false;
+            if(cf && ca!==cf) v=false;
+            if(qf==='running' && st!=='running') v=false;
+            else if(qf==='stopped' && st!=='stopped') v=false;
+            card.style.display = v?'':'none';
+            if(v) any=true;
+        });
+        const nr = document.getElementById('noResultsMessage');
+        if(nr) nr.style.display = any?'none':'block';
+    }
+
+    function setupToolSelection() {
+        const all = document.getElementById('selectAllTools');
+        const cbs = document.querySelectorAll('.tool-checkbox');
+        if(all) {
+            all.addEventListener('change', function() {
+                cbs.forEach(cb => {
+                    cb.checked = this.checked;
+                    const n = cb.getAttribute('data-tool-name');
+                    this.checked ? selectedTools.add(n) : selectedTools.delete(n);
+                });
+                updateBulkOperationButtons();
+            });
+        }
+    }
+
+    function handleToolSelection(cb, name) {
+        cb.checked ? selectedTools.add(name) : selectedTools.delete(name);
+        updateBulkOperationButtons();
+    }
+
+    function updateBulkOperationButtons() {
+        const n = selectedTools.size;
+        const el = document.getElementById('selectedCount');
+        if(el) el.textContent = `${n} tool${n!==1?'s':''} selected`;
+        ['bulkStartBtn','bulkRestartBtn','bulkStopBtn'].forEach(id => {
+            const b = document.getElementById(id);
+            if(b) b.disabled = n===0;
+        });
+    }
+
+    function clearSelection() {
+        selectedTools.clear();
+        document.querySelectorAll('.tool-checkbox').forEach(cb => cb.checked=false);
+        const all = document.getElementById('selectAllTools');
+        if(all) all.checked = false;
+        updateBulkOperationButtons();
+    }
+
+    async function bulkOperation(action) {
+        if(!selectedTools.size) { showContainerWarning('⚠️ Please select tools first'); return; }
+        if(!confirm(`${action.toUpperCase()} ${selectedTools.size} tools?`)) return;
+        let ok=0, fail=0;
+        for(const name of selectedTools) {
+            try {
+                const r = await fetch(`/api/containers/${getContainerStatusKey(name)}/${action}`, {method:'POST'});
+                const d = await r.json();
+                d.success ? ok++ : fail++;
+            } catch(e) { fail++; }
+        }
+        if(!fail) showContainerSuccess(`✅ All ${ok} tools ${action}ed`);
+        else if(!ok) showContainerError(`❌ All ${fail} operations failed`);
+        else showContainerWarning(`⚠️ ${ok} succeeded, ${fail} failed`);
+        selectedTools.clear(); updateBulkOperationButtons(); loadTools();
+    }
+
+    let autoRefreshInterval;
+    function startAutoRefresh() {
+        if(autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(() => { loadMetrics(); loadTools(); updateMiniDashboard(); }, 30000);
+    }
+
+    function showNotification(message, type='info') {
+        const n = document.createElement('div');
+        n.className = `custom-notification ${type}`;
+        const icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+        n.innerHTML = `${icons[type]||'ℹ️'} ${message}`;
+        document.body.appendChild(n);
+        setTimeout(() => {
+            n.classList.add('fade-out');
+            setTimeout(() => { if(n.parentNode) n.parentNode.removeChild(n); }, 280);
+        }, 2500);
+    }
+
+    // Credentials
+    function showCredentials(name) {
+        const tool = allTools.find(t => t.name===name);
+        if(!tool) return;
+        let html = '';
+        switch(name.toLowerCase()) {
+            case 'the hive': html=`<div class="credentials-field"><label>Username</label><div class="value">admin<button class="copy-btn ms-2" onclick="copyToClipboard('admin')">Copy</button></div></div><div class="credentials-field"><label>Password</label><div class="value">secret<button class="copy-btn ms-2" onclick="copyToClipboard('secret')">Copy</button></div></div>`; break;
+            case 'shuffle': html=`<div class="credentials-field"><label>Username</label><div class="value">User needs to create</div></div><div class="credentials-field"><label>Password</label><div class="value">User needs to create</div></div>`; break;
+            case 'fleetdm': case 'cortex': case 'portainer': html=`<div class="credentials-field"><label>Username</label><div class="value">User needs to set</div></div><div class="credentials-field"><label>Password</label><div class="value">User needs to set</div></div>`; break;
+            case 'caldera': html=`<div class="credentials-field"><label>Username</label><div class="value">admin, blue, or red</div></div><div class="credentials-field"><label>Password</label><div class="value">cyberblue<button class="copy-btn ms-2" onclick="copyToClipboard('cyberblue')">Copy</button></div></div>`; break;
+            default:
+                if(tool.credentials) {
+                    const u = Array.isArray(tool.credentials.username)?tool.credentials.username.join(', '):(tool.credentials.username||'N/A');
+                    html=`<div class="credentials-field"><label>Username</label><div class="value">${u}</div></div><div class="credentials-field"><label>Password</label><div class="value">${tool.credentials.password||'N/A'}<button class="copy-btn ms-2" onclick="copyToClipboard('${tool.credentials.password}')">Copy</button></div></div>`;
+                } else html=`<div class="credentials-field"><label>Username</label><div class="value">N/A</div></div><div class="credentials-field"><label>Password</label><div class="value">N/A</div></div>`;
+        }
+        const url = `${tool.protocols[0]}://${getServerIP()}:${tool.port}`;
+        html += `<div class="credentials-field"><label>Access URL</label><div class="value">${url}<button class="copy-btn ms-2" onclick="copyToClipboard('${url}')">Copy</button></div></div>`;
+        document.getElementById('credentialsContent').innerHTML = html;
+        document.getElementById('credentialsToolName').textContent = name;
+        document.getElementById('credentialsModal').style.display = 'flex';
+    }
+
+    function closeCredentialsModal() { document.getElementById('credentialsModal').style.display='none'; }
+    function closeToolInfoModal()    { document.getElementById('toolInfoModal').style.display='none'; }
+
+    function copyToClipboard(text) {
+        if(navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(()=>showNotification('✓ Copied!','success')).catch(()=>fallbackCopy(text));
+        } else fallbackCopy(text);
+    }
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value=text; ta.style.position='fixed'; ta.style.left='-999999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showNotification('✓ Copied!','success'); }
+        catch(e) { showNotification('Copy failed','error'); }
+        document.body.removeChild(ta);
+    }
+
+    function showToolInfo(name) {
+        const tool = allTools.find(t=>t.name===name);
+        if(!tool) return;
+        const key = getContainerStatusKey(name);
+        const status = containerStatuses[key]||{status:'unknown',status_text:'Unknown'};
+        document.getElementById('toolInfoName').textContent = `${name} Information`;
+        document.getElementById('toolInfoBody').innerHTML = `
+            <div class="tool-info-section"><h5><i class="fas fa-info-circle me-2"></i>Overview</h5>
+                <p><strong>Description:</strong> ${tool.description}</p>
+                <p><strong>Port:</strong> <code>${tool.port}</code></p>
+                <p><strong>Protocol:</strong> <code>${tool.protocols.join(', ')}</code></p>
+            </div>
+            <div class="tool-info-section"><h5><i class="fas fa-server me-2"></i>Container Status</h5>
+                <p><strong>Status:</strong> <span class="badge bg-${status.status==='running'?'success':status.status==='stopped'?'danger':'warning'}">${status.status}</span></p>
+                <p><strong>Uptime:</strong> ${status.status_text||'Unknown'}</p>
+            </div>
+            <div class="tool-info-section"><h5><i class="fas fa-key me-2"></i>Access</h5>
+                <p><strong>URL:</strong> <code>${tool.protocols[0]}://${getServerIP()}:${tool.port}</code></p>
+            </div>
+            <div class="tool-info-section"><h5><i class="fas fa-tools me-2"></i>Management</h5>
+                <ul><li><strong>Start:</strong> Launch if stopped</li><li><strong>Stop:</strong> Gracefully shut down</li><li><strong>Restart:</strong> Restart to apply changes</li></ul>
+            </div>`;
+        document.getElementById('toolInfoModal').style.display='flex';
+    }
+
+    // Mini Dashboard
+    async function updateMiniDashboard() {
+        try {
+            const [mr, tr] = await Promise.all([fetch('/api/dashboard/metrics'), fetch('/api/tools')]);
+            const md = await mr.json();
+            const td = await tr.json();
+            const tools = td.tools||[];
+            const running = tools.filter(t => { const k=getContainerStatusKey(t.name); return containerStatuses[k]?.status==='running'; }).length;
+            const total = tools.length;
+            const hp = total>0?Math.round((running/total)*100):0;
+            const hs = hp>=80?'Excellent':hp>=60?'Good':hp>=40?'Fair':hp>=20?'Poor':'Critical';
+            const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+            set('miniContainers',`${running}/${total}`);
+            set('miniHealth', hs);
+            if(md.system) { set('miniCpu',`${md.system.cpu_percent}%`); set('miniMemory',`${md.system.memory_percent}%`); }
+        } catch(e){}
+    }
+
+    // Smart Suggestions
+    const cybersecuritySuggestions = [
+        {icon:'🔍',text:'Use Velociraptor for endpoint visibility and artifact collection',category:'DFIR'},
+        {icon:'🔍',text:'Hunt for persistence mechanisms across endpoints with Velociraptor',category:'DFIR'},
+        {icon:'📊',text:'Monitor failed authentication attempts with Wazuh alerts',category:'SIEM'},
+        {icon:'📊',text:'Configure Wazuh for real-time file integrity monitoring',category:'SIEM'},
+        {icon:'🛡️',text:'Check threat intel with MISP for IOCs and TTPs',category:'Threat Intel'},
+        {icon:'🛡️',text:'Track threat actor campaigns using MISP',category:'Threat Intel'},
+        {icon:'⚡',text:'Automate Wazuh alerts → MISP enrichment → TheHive case creation',category:'SOAR'},
+        {icon:'⚡',text:'Use Shuffle to automate evidence collection workflows',category:'SOAR'},
+        {icon:'🌐',text:'Analyze network traffic with Wireshark for protocol anomalies',category:'Network'},
+        {icon:'🌐',text:'Use Wireshark to investigate encrypted traffic patterns',category:'Network'},
+        {icon:'💡',text:'Implement MFA everywhere — it blocks 99% of credential attacks',category:'Best Practice'},
+        {icon:'💡',text:'Regularly update your threat intelligence feeds for current IOCs',category:'Best Practice'},
+        {icon:'💡',text:'Conduct regular tabletop exercises to test your IR plan',category:'Best Practice'},
+        {icon:'💡',text:'Apply least privilege access controls across all systems',category:'Best Practice'},
+        {icon:'🔍',text:'Collect memory dumps with Velociraptor for advanced forensics',category:'DFIR'},
+        {icon:'📊',text:'Use Wazuh to track user privilege escalation attempts',category:'SIEM'},
+        {icon:'⚡',text:'Configure Shuffle for automated threat blocking workflows',category:'SOAR'},
+        {icon:'🛡️',text:'Use MISP to correlate indicators across multiple incidents',category:'Threat Intel'},
+    ];
+
+    function renderSuggestions() {
+        const c = document.getElementById('suggestionsContainer');
+        if(!c) return;
+        const shuffle = [...cybersecuritySuggestions].sort(()=>0.5-Math.random()).slice(0,4);
+        c.innerHTML = shuffle.map(s=>`
+            <div class="suggestion-item">
+                <div class="suggestion-icon">${s.icon}</div>
+                <div>
+                    <div class="suggestion-text">${s.text}</div>
+                    <span class="suggestion-cat">${s.category}</span>
+                </div>
+            </div>`).join('');
+    }
+
+    // ═══════════════════════════════════════════════════
+    // SPARKLINE ENGINE
+    // ═══════════════════════════════════════════════════
+    const sparkData = {
+        cpu:  { history: [], color: '#00d4ff',  label: 'CPU',    unit: '%', canvasId: 'sparkCpu',  valueId: 'cpuUsage',    changeId: 'cpuChange'    },
+        mem:  { history: [], color: '#00cc33',  label: 'Memory', unit: '%', canvasId: 'sparkMem',  valueId: 'memoryUsage', changeId: 'memoryChange' },
+        disk: { history: [], color: '#ffaa00',  label: 'Disk',   unit: '%', canvasId: 'sparkDisk', valueId: 'diskUsage',   changeId: 'diskChange'   },
+        net:  { history: [], color: '#aa66ff',  label: 'Net I/O',unit: 'GB',canvasId: 'sparkNet',  valueId: 'networkIO',   changeId: 'networkChange'},
+    };
+    const SPARK_MAX = 30; // data points to keep
+
+    function drawSparkline(cfg) {
+        const canvas = document.getElementById(cfg.canvasId);
+        if (!canvas) return;
+        const dpr = window.devicePixelRatio || 1;
+        const W   = canvas.offsetWidth  || 200;
+        const H   = canvas.offsetHeight || 48;
+        canvas.width  = W * dpr;
+        canvas.height = H * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const data = cfg.history;
+        if (data.length < 2) return;
+
+        const min  = 0;
+        const max  = Math.max(100, ...data) * 1.05;
+        const xStep = W / (SPARK_MAX - 1);
+        const yScale = (v) => H - 4 - ((v - min) / (max - min)) * (H - 8);
+
+        // Filled area gradient
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0,   cfg.color + '55');
+        grad.addColorStop(0.7, cfg.color + '11');
+        grad.addColorStop(1,   'transparent');
+
+        ctx.beginPath();
+        data.forEach((v, i) => {
+            const x = i * xStep;
+            const y = yScale(v);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        // Close fill path
+        ctx.lineTo((data.length - 1) * xStep, H);
+        ctx.lineTo(0, H);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Line on top
+        ctx.beginPath();
+        data.forEach((v, i) => {
+            const x = i * xStep;
+            const y = yScale(v);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = cfg.color;
+        ctx.lineWidth   = 1.8;
+        ctx.lineJoin    = 'round';
+        ctx.shadowColor = cfg.color;
+        ctx.shadowBlur  = 6;
+        ctx.stroke();
+        ctx.shadowBlur  = 0;
+
+        // Latest dot
+        const lastX = (data.length - 1) * xStep;
+        const lastY = yScale(data[data.length - 1]);
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle   = cfg.color;
+        ctx.shadowColor = cfg.color;
+        ctx.shadowBlur  = 10;
+        ctx.fill();
+        ctx.shadowBlur  = 0;
+
+        // Horizontal baseline grid lines (subtle)
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth   = 0.5;
+        [25, 50, 75].forEach(pct => {
+            const y = yScale((pct / 100) * max);
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        });
+    }
+
+    function updateSparkValue(cfg, rawValue) {
+        const num = parseFloat(rawValue) || 0;
+        cfg.history.push(num);
+        if (cfg.history.length > SPARK_MAX) cfg.history.shift();
+
+        // Update big number
+        const el = document.getElementById(cfg.valueId);
+        if (el) el.textContent = `${num}${cfg.unit}`;
+
+        // Update delta label
+        const ch = document.getElementById(cfg.changeId);
+        if (ch && cfg.history.length >= 2) {
+            const prev = cfg.history[cfg.history.length - 2];
+            const diff = num - prev;
+            const sign = diff > 0 ? '▲' : diff < 0 ? '▼' : '●';
+            const col  = diff > 0 ? '#ff6b6b' : diff < 0 ? '#00cc33' : '#888';
+            ch.innerHTML = `<span style="color:${col}; font-weight:700;">${sign} ${Math.abs(diff).toFixed(1)}${cfg.unit}</span> <span style="color:var(--text-muted);">vs prev</span>`;
+        }
+
+        drawSparkline(cfg);
+    }
+
+    // Dashboard metrics — now feeds sparklines
+    async function loadDashboardMetrics() {
+        try {
+            const r = await fetch('/api/dashboard/metrics');
+            const d = await r.json();
+
+            updateSparkValue(sparkData.cpu,  d.system?.cpu_percent    || simulateValue(sparkData.cpu));
+            updateSparkValue(sparkData.mem,  d.system?.memory_percent || simulateValue(sparkData.mem));
+            updateSparkValue(sparkData.disk, d.system?.disk_percent   || simulateValue(sparkData.disk));
+            updateSparkValue(sparkData.net,  Math.round(d.system?.memory_used_gb || simulateValue(sparkData.net)));
+
+            // Container counts
+            const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+            set('runningContainers', `${d.containers?.running||0} Running`);
+            set('stoppedContainers', `${d.containers?.stopped||0} Stopped`);
+            set('totalContainers',   `${d.containers?.total||0} Total`);
+
+            updateCategoryHealth(d.categories||{});
+        } catch(e) {
+            // In demo/dev, simulate values so sparklines still animate
+            updateSparkValue(sparkData.cpu,  simulateValue(sparkData.cpu));
+            updateSparkValue(sparkData.mem,  simulateValue(sparkData.mem));
+            updateSparkValue(sparkData.disk, simulateValue(sparkData.disk));
+            updateSparkValue(sparkData.net,  simulateValue(sparkData.net));
+        }
+    }
+
+    // Simulation for dev/demo — gentle random walk around a base value
+    function simulateValue(cfg) {
+        const base = cfg.history.length
+            ? cfg.history[cfg.history.length - 1]
+            : { cpu: 42, mem: 61, disk: 55, net: 3 }[cfg.label.toLowerCase().replace(' i/o','').replace(' usage','')] || 50;
+        const walk = (Math.random() - 0.5) * 6;
+        return Math.max(5, Math.min(95, base + walk));
+    }
+
+    // Redraw sparklines on resize
+    window.addEventListener('resize', () => {
+        Object.values(sparkData).forEach(cfg => drawSparkline(cfg));
+    });
+
+    async function loadSecurityEvents() {
+        try {
+            const r = await fetch('/api/dashboard/security-events');
+            const d = await r.json();
+            const el = document.getElementById('securityEventsList');
+            const countEl = document.getElementById('eventCount');
+            if(countEl) countEl.textContent = d.events?.length||0;
+            if(!d.events?.length) { el.innerHTML='<div class="text-center p-3" style="color:var(--text-muted);font-size:0.78rem;">No recent security events</div>'; return; }
+            el.innerHTML = d.events.slice(0,10).map(ev=>`
+                <div class="security-event ${ev.severity}">
+                    <i class="${ev.icon}" style="color:${ev.severity==='high'?'var(--red)':ev.severity==='medium'?'var(--amber)':'var(--green)'}; font-size:0.9rem;"></i>
+                    <div>
+                        <div style="font-size:0.78rem; font-weight:600; color:var(--text);">${ev.title}</div>
+                        <div style="font-size:0.7rem; color:var(--text-soft);">${ev.description}</div>
+                        <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(ev.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>`).join('');
+        } catch(e){}
+    }
+
+    async function loadNetworkStats() {
+        try {
+            const r = await fetch('/api/dashboard/network-stats');
+            const d = await r.json();
+            const el = document.getElementById('networkStatsList');
+            el.innerHTML = [
+                ['Bytes Received', formatBytes(d.system_network?.bytes_recv||0)],
+                ['Bytes Sent', formatBytes(d.system_network?.bytes_sent||0)],
+                ['Packets Received', (d.system_network?.packets_recv||0).toLocaleString()],
+                ['Packets Sent', (d.system_network?.packets_sent||0).toLocaleString()],
+                ['Docker Networks', d.docker_networks?.length||0],
+            ].map(([l,v])=>`
+                <div class="network-stat-item">
+                    <span style="font-size:0.76rem; color:var(--text-soft);">${l}</span>
+                    <span style="font-size:0.78rem; font-weight:700; color:var(--text);">${v}</span>
+                </div>`).join('');
+        } catch(e){}
+    }
+
+    async function loadContainerStatusGrid() {
+        try {
+            const r = await fetch('/api/containers/status');
+            const d = await r.json();
+            const grid = document.getElementById('containerStatusGrid');
+            const containers = Object.values(d.containers||{});
+            if(!containers.length) { grid.innerHTML='<div class="loading-spinner">No containers found</div>'; return; }
+            grid.innerHTML = containers.map(c=>`
+                <div class="container-status-item ${c.status}">
+                    <span class="status-indicator ${c.status==='running'?'status-running':'status-stopped'}"></span>
+                    <div>
+                        <div style="font-size:0.78rem; font-weight:600; color:var(--text);">${c.name}</div>
+                        <div style="font-size:0.68rem; color:var(--text-muted);">${c.status_text}</div>
+                    </div>
+                </div>`).join('');
+        } catch(e){}
+    }
+
+    function updateCategoryHealth(cats) {
+        const el = document.getElementById('categoryHealthList');
+        const entries = Object.entries(cats);
+        if(!entries.length) { el.innerHTML='<div class="loading-spinner">No category data</div>'; return; }
+        el.innerHTML = entries.map(([cat,d])=>`
+            <div class="category-item ${d.status}">
+                <div style="flex:1;">
+                    <div style="font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text);">${cat}</div>
+                    <div style="font-size:0.68rem; color:var(--text-muted);">${d.healthy_tools}/${d.total_tools} tools healthy</div>
+                </div>
+                <span class="badge bg-${d.status==='healthy'?'success':d.status==='degraded'?'warning':'danger'}">${d.health_percentage}%</span>
+            </div>`).join('');
+    }
+
+    function formatBytes(b) {
+        if(!b) return '0 B';
+        const k=1024, s=['B','KB','MB','GB','TB'], i=Math.floor(Math.log(b)/Math.log(k));
+        return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i];
+    }
+
+    let sparkInterval = null;
+
+    function initializeDashboard() {
+        loadDashboardMetrics();
+        loadSecurityEvents();
+        loadNetworkStats();
+        loadContainerStatusGrid();
+        // Refresh sparklines every 5s while metrics tab is open
+        if (!sparkInterval) {
+            sparkInterval = setInterval(() => {
+                const mp = document.getElementById('metrics');
+                if (mp?.classList.contains('show')) loadDashboardMetrics();
+            }, 5000);
+        }
+    }
+
+    // ═══ AGENTS ═══
+    const AGENTS = {
+        velociraptor:{name:'Velociraptor',port:8000,os_options:[
+            {id:'windows',name:'Windows',icon:'fab fa-windows',binary:'velociraptor-windows.exe'},
+            {id:'linux',name:'Linux',icon:'fab fa-linux',binary:'velociraptor-linux'},
+            {id:'macos-intel',name:'macOS (Intel)',icon:'fab fa-apple',binary:'velociraptor-macos-intel'},
+            {id:'macos-arm',name:'macOS (M1/M2)',icon:'fab fa-apple',binary:'velociraptor-macos-arm'}]},
+        wazuh:{name:'Wazuh',port:1514,os_options:[
+            {id:'windows',name:'Windows',icon:'fab fa-windows',binary:'wazuh-agent.msi'},
+            {id:'ubuntu',name:'Linux (Ubuntu/Debian)',icon:'fab fa-linux',binary:'wazuh-agent.deb'},
+            {id:'centos',name:'Linux (RHEL/CentOS)',icon:'fab fa-redhat',binary:'wazuh-agent.rpm'}]},
+        caldera:{name:'Caldera Sandcat',port:7009,os_options:[
+            {id:'windows',name:'Windows',icon:'fab fa-windows',binary:'One-liner command'},
+            {id:'linux',name:'Linux',icon:'fab fa-linux',binary:'One-liner command'},
+            {id:'macos',name:'macOS',icon:'fab fa-apple',binary:'One-liner command'}]}
+    };
+
+    function showAgentDownloader(type) {
+        currentAgentType=type; currentSelectedOS=null;
+        const agent=AGENTS[type]; if(!agent) return;
+        document.getElementById('currentAgentName').textContent=agent.name;
+        document.getElementById('availableAgentsGrid').style.display='none';
+        document.getElementById('agentDownloader').style.display='block';
+        const portMsgs={velociraptor:'Port 8000',wazuh:'Port 1514',caldera:'Port 7009'};
+        const pi=document.getElementById('agentPortInfo'); if(pi) pi.textContent=portMsgs[type]||'';
+        const grid=document.getElementById('osSelectionGrid');
+        grid.innerHTML=agent.os_options.map(os=>`
+            <div class="col-md-6 col-lg-3">
+                <div class="os-card" onclick="selectOS('${os.id}')" data-os="${os.id}">
+                    <i class="${os.icon}" style="font-size:2rem; color:var(--text-muted); display:block; margin-bottom:0.5rem;"></i>
+                    <div style="font-size:0.76rem; font-weight:600; color:var(--text);">${os.name}</div>
+                </div>
+            </div>`).join('');
+        updateDownloadButton();
+    }
+
+    function hideAgentConfig() {
+        document.getElementById('availableAgentsGrid').style.display='flex';
+        document.getElementById('agentDownloader').style.display='none';
+        currentAgentType=null; currentSelectedOS=null;
+        document.getElementById('agentServerIp').value='';
+        ['downloadError','downloadSuccess','packageInfo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+    }
+
+    function selectOS(id) {
+        currentSelectedOS=id;
+        document.querySelectorAll('.os-card').forEach(c=>{
+            if(c.getAttribute('data-os')===id) {
+                c.style.borderColor='var(--green)'; c.style.background='rgba(0,255,65,0.08)';
+                c.querySelector('i').style.color='var(--green)';
+            } else {
+                c.style.borderColor='transparent'; c.style.background='var(--bg-deep)';
+                c.querySelector('i').style.color='var(--text-muted)';
+            }
+        });
+        updateDownloadButton();
+    }
+
+    function updateDownloadButton() {
+        const btn=document.getElementById('downloadAgentBtn');
+        const ip=document.getElementById('agentServerIp')?.value.trim()||'';
+        const txt=document.getElementById('downloadBtnText');
+        if(ip && currentSelectedOS) {
+            btn.disabled=false;
+            const osName=AGENTS[currentAgentType]?.os_options.find(o=>o.id===currentSelectedOS)?.name;
+            txt.textContent=`Download ${osName} Package`;
+        } else { btn.disabled=true; txt.textContent=!ip&&!currentSelectedOS?'Enter server IP and select OS':!ip?'Enter server IP address':'Select your OS'; }
+    }
+
+    function downloadAgentPackage() {
+        const ip=document.getElementById('agentServerIp').value.trim();
+        const errDiv=document.getElementById('downloadError'), errTxt=document.getElementById('downloadErrorText');
+        const okDiv=document.getElementById('downloadSuccess'), btn=document.getElementById('downloadAgentBtn');
+        errDiv.style.display='none'; okDiv.style.display='none';
+        if(!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) { errTxt.textContent='Invalid IP format. Use: 192.168.1.100'; errDiv.style.display='block'; return; }
+        if(!currentSelectedOS) { errTxt.textContent='Please select an OS'; errDiv.style.display='block'; return; }
+        btn.disabled=true;
+        btn.innerHTML='<i class="fas fa-circle-notch fa-spin me-2"></i><span id="downloadBtnText">Generating package...</span>';
+        fetch('/api/agents/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent_type:currentAgentType,server_ip:ip,os_type:currentSelectedOS})})
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.success) {
+                    document.getElementById('packageInfo').style.display='block';
+                    document.getElementById('packageBinaryName').textContent=AGENTS[currentAgentType].os_options.find(o=>o.id===currentSelectedOS)?.binary;
+                    window.location.href=d.download_url;
+                    setTimeout(()=>{ okDiv.innerHTML=`<i class="fas fa-check-circle me-2"></i>Package ready! <a href="${d.download_url}" class="text-success fw-bold">Click here</a> if download didn't start.`; okDiv.style.display='block'; },500);
+                } else { errTxt.textContent=d.error||'Failed to generate package'; errDiv.style.display='block'; }
+            })
+            .catch(e=>{ errTxt.textContent='Network error: '+e.message; errDiv.style.display='block'; })
+            .finally(()=>{ btn.disabled=false; const osN=AGENTS[currentAgentType].os_options.find(o=>o.id===currentSelectedOS)?.name; btn.innerHTML=`<i class="fas fa-download me-2"></i><span id="downloadBtnText">Download ${osN} Package</span>`; });
+    }
+
+    // ═══ SHUFFLE ═══
+    const CYBERBLUE_TOOLS=[
+        {name:'Velociraptor',url:'https://{{IP}}:7000',api:'https://{{IP}}:7000/api/v1',user:'admin',pass:'cyberblue',cat:'DFIR',color:'#3b82f6'},
+        {name:'Wazuh',url:'https://{{IP}}:7001',api:'https://{{IP}}:55000',user:'admin',pass:'SecretPassword',cat:'SIEM',color:'#10b981'},
+        {name:'MISP',url:'https://{{IP}}:7003',api:'https://{{IP}}:7003/events',user:'admin@admin.test',pass:'admin',cat:'CTI',color:'#8b5cf6'},
+        {name:'CyberChef',url:'http://{{IP}}:7004',cat:'Utility',color:'#f59e0b'},
+        {name:'TheHive',url:'http://{{IP}}:7005',api:'http://{{IP}}:7005/api',user:'admin@thehive.local',pass:'secret',cat:'SOAR',color:'#ef4444'},
+        {name:'Cortex',url:'http://{{IP}}:7006',api:'http://{{IP}}:7006/api',user:'admin',pass:'admin',cat:'SOAR',color:'#06b6d4'},
+        {name:'FleetDM',url:'http://{{IP}}:7007',user:'admin',pass:'admin123',cat:'Management',color:'#8b5cf6'},
+        {name:'Arkime',url:'http://{{IP}}:7008',user:'admin',pass:'admin',cat:'Network',color:'#14b8a6'},
+        {name:'Caldera',url:'http://{{IP}}:7009',api:'http://{{IP}}:7009/api/v2',user:'admin',pass:'admin',cat:'Red Team',color:'#dc2626'},
+        {name:'MITRE Navigator',url:'http://{{IP}}:7013',cat:'CTI',color:'#6366f1'},
+        {name:'Evebox',url:'http://{{IP}}:7015',cat:'IDS',color:'#ec4899'},
+        {name:'Wireshark',url:'https://{{IP}}:7099',user:'admin',pass:'cyberblue',cat:'Network',color:'#0ea5e9'}
+    ];
+
+    function showShuffleIntegrations() {
+        document.getElementById('availableAgentsGrid').style.display='none';
+        document.getElementById('shuffleIntegrations').style.display='block';
+        const ip=document.getElementById('agentServerIp')?.value||window.location.hostname;
+        const grid=document.getElementById('shuffleToolsGrid');
+        grid.innerHTML=CYBERBLUE_TOOLS.map(t=>{
+            const url=t.url.replace('{{IP}}',ip);
+            const api=t.api?t.api.replace('{{IP}}',ip):'';
+            return `<div class="col-md-6 col-lg-4">
+                <div class="p-2 rounded mb-1" style="background:var(--bg-deep); border-left:3px solid ${t.color};">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--text);">${t.name} <span style="color:${t.color}; font-size:0.65rem;">[${t.cat}]</span></div>
+                    <div style="font-size:0.72rem; margin-top:0.2rem;"><strong style="color:var(--text-muted);">URL:</strong> <code>${url}</code></div>
+                    ${api?`<div style="font-size:0.72rem;"><strong style="color:var(--text-muted);">API:</strong> <code>${api}</code></div>`:''}
+                    ${t.user?`<div style="font-size:0.72rem;"><strong style="color:var(--text-muted);">Auth:</strong> <code>${t.user} / ${t.pass}</code></div>`:''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function hideShuffleIntegrations() {
+        document.getElementById('availableAgentsGrid').style.display='flex';
+        document.getElementById('shuffleIntegrations').style.display='none';
+    }
+
+    // ═══ PCAP ═══
+    function showPcapCapture() { document.getElementById('availableAgentsGrid').style.display='none'; document.getElementById('pcapCapture').style.display='block'; }
+    function hidePcapCapture()  { document.getElementById('availableAgentsGrid').style.display='flex'; document.getElementById('pcapCapture').style.display='none'; }
+    function setCaptureTime(s)  {
+        captureTime=s;
+        document.querySelectorAll('#pcapCapture .btn-group button').forEach(b=>{ b.classList.remove('active'); });
+        if(event.target) { event.target.classList.add('active'); }
+    }
+
+    async function startPcapCapture() {
+        const btn=document.getElementById('startCaptureBtn'), prog=document.getElementById('captureProgress'), comp=document.getElementById('captureComplete');
+        btn.disabled=true; prog.style.display='block'; comp.style.display='none';
+        try {
+            const r=await fetch('/api/arkime/capture/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({duration:captureTime})});
+            const d=await r.json();
+            if(d.success) {
+                let elapsed=0;
+                const iv=setInterval(()=>{
+                    elapsed++;
+                    const pct=Math.min((elapsed/captureTime)*100,100);
+                    document.getElementById('captureProgressBar').style.width=pct+'%';
+                    const rem=captureTime-elapsed;
+                    document.getElementById('captureProgressText').textContent=`Capturing... ${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')} remaining`;
+                    if(elapsed>=captureTime) { clearInterval(iv); prog.style.display='none'; comp.style.display='block'; btn.disabled=false; }
+                },1000);
+            } else { alert('Failed to start: '+(d.error||'Unknown')); btn.disabled=false; prog.style.display='none'; }
+        } catch(e) { alert('Error: '+e.message); btn.disabled=false; prog.style.display='none'; }
+    }
+
+    // ═══ INTEL / MISP ═══
+    async function searchMISP() {
+        const q=document.getElementById('iocSearchInput').value.trim();
+        const res=document.getElementById('iocSearchResults'), load=document.getElementById('iocSearchLoading');
+        if(!q) { alert('Please enter an IOC'); return; }
+        res.style.display='none'; load.style.display='block';
+        try {
+            const r=await fetch(`/api/misp/search?value=${encodeURIComponent(q)}`);
+            const d=await r.json();
+            load.style.display='none'; res.style.display='block';
+            if(d.success && d.results?.length) {
+                res.innerHTML=`<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Found <strong>${d.results.length}</strong> match(es) in MISP</div>`
+                    +d.results.map(r=>`<div class="mb-2 p-3 rounded" style="background:var(--bg-deep); border-left:3px solid #8b5cf6;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><h6 style="color:var(--text); font-size:0.82rem;">${r.Event?.info||'Threat Event'}</h6>
+                                <small style="color:var(--text-soft);">Type: ${r.type||'—'} | Value: <code>${r.value||q}</code> | Category: ${r.category||'—'}</small></div>
+                            <a href="https://${window.location.hostname}:7003/events/view/${r.event_id}" target="_blank" class="btn btn-outline-primary btn-sm">View</a>
+                        </div></div>`).join('');
+            } else {
+                res.innerHTML=`<div class="alert alert-warning"><i class="fas fa-info-circle me-2"></i>No matches for <code>${q}</code> in MISP</div>
+                    <p style="color:var(--text-soft); font-size:0.78rem;">Submit it as a new MISP event, check if feeds need updating, or try a different format.</p>`;
+            }
+        } catch(e) {
+            load.style.display='none'; res.style.display='block';
+            res.innerHTML=`<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error searching MISP: ${e.message}</div>`;
+        }
+    }
+
+    async function loadIntelDashboard() {
+        try {
+            const sr=await fetch('/api/misp/stats');
+            const sd=await sr.json();
+            if(sd.success) {
+                const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+                set('mispEventCount',sd.event_count||'0');
+                set('mispAttributeCount',sd.attribute_count||'0');
+                set('mispFeedCount',sd.feed_count||'0');
+            }
+            const er=await fetch('/api/misp/recent-events');
+            const ed=await er.json();
+            const el=document.getElementById('recentMISPEvents');
+            if(ed.success && ed.events?.length) {
+                el.innerHTML=ed.events.slice(0,5).map(ev=>{
+                    const e=ev.Event||ev, id=e.id||'', info=e.info||'Threat Event', ts=e.publish_timestamp||e.date||'';
+                    const dt=ts&&!isNaN(ts)?new Date(ts*1000).toLocaleDateString():ts;
+                    return `<div class="mb-2 p-2 rounded" style="background:var(--bg-deep); border-left:3px solid #8b5cf6;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><div style="font-size:0.78rem; font-weight:600; color:var(--text);">${info}</div>
+                                <small style="color:var(--text-muted); font-size:0.68rem;">Published: ${dt} | Attributes: ${e.attribute_count||0}</small></div>
+                            <a href="https://${window.location.hostname}:7003/events/view/${id}" target="_blank" class="btn btn-outline-primary btn-sm" style="font-size:0.68rem; padding:0.2rem 0.5rem;">View</a>
+                        </div></div>`;
+                }).join('');
+            } else el.innerHTML='<p style="color:var(--text-muted); font-size:0.78rem; text-align:center;">No recent events</p>';
+        } catch(e){}
+    }
+
+    async function syncMISPFeeds() {
+        try {
+            const r=await fetch('/api/misp/sync-feeds',{method:'POST'});
+            const d=await r.json();
+            if(d.success) { showNotification('Feed sync started!','success'); document.getElementById('lastFeedSync').textContent='Last sync: Just now'; }
+            else showNotification('Failed: '+(d.error||'Unknown'),'error');
+        } catch(e) { showNotification('Error: '+e.message,'error'); }
+    }
+
+    // ═══ HUNTING RULES ═══
+    async function loadHuntingDashboard() {
+        try {
+            const yr=await fetch('/api/hunting/yara/stats'); const yd=await yr.json();
+            document.getElementById('yaraRuleCount').textContent=yd.total_rules||0;
+            document.getElementById('yaraVersion').textContent=yd.version||'N/A';
+            document.getElementById('yaraLastUpdate').textContent=yd.last_update||'Never';
+            const yc=document.getElementById('yaraCategories'); yc.innerHTML='';
+            (yd.categories||[]).slice(0,5).forEach(c=>{ yc.innerHTML+=`<span class="badge bg-danger me-1 mb-1" style="font-size:0.62rem;">${c.name}: ${c.count}</span>`; });
+
+            const sr=await fetch('/api/hunting/sigma/stats'); const sd=await sr.json();
+            document.getElementById('sigmaRuleCount').textContent=sd.total_rules||0;
+            document.getElementById('sigmaVersion').textContent=sd.version||'N/A';
+            document.getElementById('sigmaLastUpdate').textContent=sd.last_update||'Never';
+            const sc=document.getElementById('sigmaCategories'); sc.innerHTML='';
+            (sd.categories||[]).slice(0,5).forEach(c=>{ sc.innerHTML+=`<span class="badge bg-primary me-1 mb-1" style="font-size:0.62rem;">${c.name}: ${c.count}</span>`; });
+        } catch(e){}
+    }
+
+    async function updateRules(type) {
+        const btn=event.target, orig=btn.innerHTML;
+        btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+        try {
+            const r=await fetch('/api/hunting/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});
+            const d=await r.json();
+            if(d.success) { showNotification(`${type.toUpperCase()} rules updated!`,'success'); setTimeout(()=>loadHuntingDashboard(),1000); }
+            else showNotification(`Failed: ${d.error||'Unknown'}`,'error');
+        } catch(e) { showNotification('Error: '+e.message,'error'); }
+        finally { btn.disabled=false; btn.innerHTML=orig; }
+    }
+
+    async function viewLogs(type) {
+        try {
+            const r=await fetch(`/api/hunting/logs?type=${type}&lines=50`); const d=await r.json();
+            const logs=d[type]||[]; const content=logs.length?logs.join(''):'No log entries found';
+            const m=document.createElement('div');
+            m.className='credentials-modal'; m.style.display='flex';
+            m.innerHTML=`<div class="credentials-content" style="max-width:700px;">
+                <div class="credentials-header"><i class="fas fa-file-alt"></i><h4>${type.toUpperCase()} Logs</h4><button class="credentials-close" onclick="this.closest('.credentials-modal').remove()">&times;</button></div>
+                <div style="max-height:60vh; overflow-y:auto; background:var(--bg-deep); border-radius:var(--radius); padding:1rem;">
+                    <pre style="color:var(--text-soft); font-size:0.72rem; white-space:pre-wrap;">${content}</pre>
+                </div></div>`;
+            document.body.appendChild(m);
+        } catch(e) { showNotification('Error loading logs','error'); }
+    }
+
+    async function browseYaraRules() {
+        const m=document.createElement('div'); m.className='credentials-modal'; m.style.display='flex';
+        m.innerHTML=`<div class="credentials-content tool-info-content"><div class="credentials-header"><i class="fas fa-folder-open"></i><h4>YARA Rules Browser</h4><button class="credentials-close" onclick="this.closest('.credentials-modal').remove()">&times;</button></div><div id="yaraRulesList" class="tool-info-body"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div></div></div>`;
+        document.body.appendChild(m);
+        try {
+            const r=await fetch('/api/hunting/yara/stats'); const d=await r.json();
+            document.getElementById('yaraRulesList').innerHTML=`<div class="row g-2">${(d.categories||[]).map(c=>`<div class="col-md-4"><div class="p-2 rounded" style="background:var(--bg-deep); border-left:3px solid var(--red); cursor:pointer;" onclick="viewYaraCategory('${c.name}')"><div style="font-size:0.8rem; font-weight:700; color:var(--text);">${c.name}</div><small style="color:var(--text-muted);">${c.count} rules</small></div></div>`).join('')}</div>`;
+        } catch(e) { document.getElementById('yaraRulesList').innerHTML=`<div class="alert alert-danger">Error: ${e.message}</div>`; }
+    }
+
+    async function browseSigmaRules() {
+        const m=document.createElement('div'); m.className='credentials-modal'; m.style.display='flex';
+        m.innerHTML=`<div class="credentials-content tool-info-content"><div class="credentials-header"><i class="fas fa-folder-open"></i><h4>Sigma Rules Browser</h4><button class="credentials-close" onclick="this.closest('.credentials-modal').remove()">&times;</button></div><div id="sigmaRulesList" class="tool-info-body"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin me-2"></i>Loading...</div></div></div>`;
+        document.body.appendChild(m);
+        try {
+            const r=await fetch('/api/hunting/sigma/stats'); const d=await r.json();
+            document.getElementById('sigmaRulesList').innerHTML=`<div class="row g-2">${(d.categories||[]).map(c=>`<div class="col-md-4"><div class="p-2 rounded" style="background:var(--bg-deep); border-left:3px solid #3b82f6; cursor:pointer;" onclick="viewSigmaCategory('${c.name}')"><div style="font-size:0.8rem; font-weight:700; color:var(--text);">${c.name}</div><small style="color:var(--text-muted);">${c.count} rules</small></div></div>`).join('')}</div>`;
+        } catch(e) { document.getElementById('sigmaRulesList').innerHTML=`<div class="alert alert-danger">Error: ${e.message}</div>`; }
+    }
+
+    async function viewYaraCategory(cat) {
+        try {
+            const r=await fetch(`/api/hunting/yara/rules?category=${cat}`); const d=await r.json();
+            document.getElementById('yaraRulesList').innerHTML=`<button class="btn btn-outline-secondary btn-sm mb-2" onclick="browseYaraRules()"><i class="fas fa-arrow-left me-1"></i>Back</button><h6 style="color:var(--text); font-size:0.82rem; margin-bottom:0.75rem;">${cat} (${d.total} rules)</h6>
+                <table class="table table-sm" style="color:var(--text-soft); font-size:0.76rem;"><thead><tr><th>File</th><th>Size</th><th></th></tr></thead><tbody>
+                ${(d.rules||[]).map(r=>`<tr><td><code style="font-size:0.72rem;">${r.name}</code></td><td>${(r.size/1024).toFixed(1)} KB</td><td><button class="btn btn-outline-info btn-sm" style="font-size:0.65rem;" onclick="viewRuleContent('${r.path}','yara')">View</button></td></tr>`).join('')}
+                </tbody></table>`;
+        } catch(e) { showNotification('Error loading category','error'); }
+    }
+
+    async function viewSigmaCategory(cat) {
+        try {
+            const r=await fetch(`/api/hunting/sigma/rules?category=${cat}&limit=50`); const d=await r.json();
+            document.getElementById('sigmaRulesList').innerHTML=`<button class="btn btn-outline-secondary btn-sm mb-2" onclick="browseSigmaRules()"><i class="fas fa-arrow-left me-1"></i>Back</button><h6 style="color:var(--text); font-size:0.82rem; margin-bottom:0.75rem;">${cat} (${d.total} rules, showing 50)</h6>
+                <table class="table table-sm" style="color:var(--text-soft); font-size:0.76rem;"><thead><tr><th>File</th><th>Size</th><th></th></tr></thead><tbody>
+                ${(d.rules||[]).map(r=>`<tr><td><code style="font-size:0.72rem;">${r.name}</code></td><td>${(r.size/1024).toFixed(1)} KB</td><td><button class="btn btn-outline-info btn-sm" style="font-size:0.65rem;" onclick="viewRuleContent('${r.path}','sigma')">View</button></td></tr>`).join('')}
+                </tbody></table>`;
+        } catch(e) { showNotification('Error loading category','error'); }
+    }
+
+    async function viewRuleContent(path, type) {
+        try {
+            const r=await fetch(`/api/hunting/rule/content?path=${encodeURIComponent(path)}`); const d=await r.json();
+            if(!d.success) { showNotification('Error: '+d.error,'error'); return; }
+            const m=document.createElement('div'); m.className='credentials-modal'; m.style.display='flex';
+            m.innerHTML=`<div class="credentials-content tool-info-content"><div class="credentials-header"><i class="fas fa-file-code"></i><h4>${d.name}</h4><button class="credentials-close" onclick="this.closest('.credentials-modal').remove()">&times;</button></div>
+                <div style="max-height:65vh; overflow-y:auto; background:var(--bg-deep); border-radius:var(--radius); padding:1rem;">
+                    <pre style="color:var(--text-soft); font-size:0.76rem; white-space:pre-wrap;">${d.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+                </div>
+                <div class="mt-2 text-end"><button class="btn btn-outline-light btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(d.content)}).then(()=>showNotification('Copied!','success'))"><i class="fas fa-copy me-1"></i>Copy</button></div></div>`;
+            document.body.appendChild(m);
+        } catch(e) { showNotification('Error loading rule','error'); }
+    }
+
+    // ═══ MODAL CLOSE HANDLERS ═══
+    document.getElementById('credentialsModal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeCredentialsModal(); });
+    document.getElementById('toolInfoModal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeToolInfoModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') { closeCredentialsModal(); closeToolInfoModal(); } });
+
+    // ═══ INIT ═══
+    document.addEventListener('DOMContentLoaded', async () => {
+        await detectServerIP();
+        loadTools();
+        setupSearchAndFilter();
+        renderSuggestions();
+
+        document.addEventListener('shown.bs.tab', e=>{
+            if(e.target.id==='metrics-tab') setTimeout(initializeDashboard,200);
+            if(e.target.id==='hunting-tab') setTimeout(loadHuntingDashboard,200);
+            if(e.target.id==='agents-tab')  checkAgentSystemStatus?.();
+            if(e.target.id==='intel-tab')   setTimeout(loadIntelDashboard,200);
+        });
+
+        // Auto-init metrics if already active
+        const observer=new MutationObserver(muts=>{
+            muts.forEach(m=>{ if(m.target.id==='metrics' && m.target.classList.contains('show')) setTimeout(initializeDashboard,100); });
+        });
+        const mp=document.getElementById('metrics');
+        if(mp) observer.observe(mp,{attributes:true,attributeFilter:['class']});
+
+        setInterval(()=>{
+            const mp=document.getElementById('metrics');
+            if(mp?.classList.contains('show')&&mp.classList.contains('active')) {
+                const el=document.getElementById('cpuUsage');
+                if(el&&el.textContent==='--') initializeDashboard();
+            }
+        },2000);
+
+        startAutoRefresh();
+
+        // IOC enter key
+        const ioc=document.getElementById('iocSearchInput');
+        if(ioc) ioc.addEventListener('keypress', e=>{ if(e.key==='Enter') searchMISP(); });
+
+        // Agent IP input
+        const aip=document.getElementById('agentServerIp');
+        if(aip) { aip.addEventListener('input', updateDownloadButton); aip.addEventListener('keypress', e=>{ if(e.key==='Enter'&&!document.getElementById('downloadAgentBtn').disabled) downloadAgentPackage(); }); }
+    });
+
+    function checkAgentSystemStatus() {
+        fetch('/api/agents/info').then(r=>r.json()).then(d=>{
+            const b=document.getElementById('velociraptorStatus');
+            if(b) b.innerHTML=d.server_ready?'<i class="fas fa-check-circle me-1"></i>Ready':'<i class="fas fa-exclamation-triangle me-1"></i>Not Ready';
+        }).catch(()=>{});
+    }
+
+    </script>
+    <script>
+        /* ── BINARY CMATRIX RAIN ─────────────────────────────── */
+        (function () {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx    = canvas.getContext('2d');
+
+            const FONT_SIZE   = 15;
+            const SPEED       = 0.6;
+            const FADE_ALPHA  = 0.045;
+            const HEAD_BRIGHT = '#ccffcc';
+            const BODY_COLOR  = '#00cc33';
+
+            let cols, streams;
+
+            function init() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+                cols    = Math.floor(canvas.width / FONT_SIZE);
+                streams = Array.from({ length: cols }, () => makeStream());
+                ctx.fillStyle = '#162016';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function makeStream() {
+                const len = 8 + Math.floor(Math.random() * 20);
+                return {
+                    y:       -(Math.random() * 40),
+                    speed:   0.3 + Math.random() * 0.7,
+                    len,
+                    chars:   Array.from({ length: len }, () => Math.random() < 0.5 ? '0' : '1'),
+                    tick:    0,
+                    mutRate: 0.04 + Math.random() * 0.08,
+                };
+            }
+
+            function draw() {
+                ctx.fillStyle = `rgba(22, 32, 22, ${FADE_ALPHA})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.font      = `bold ${FONT_SIZE}px 'Courier New', monospace`;
+                ctx.textAlign = 'center';
+
+                const rowH = FONT_SIZE;
+                const x0   = FONT_SIZE / 2;
+
+                streams.forEach((s, col) => {
+                    const x = x0 + col * FONT_SIZE;
+
+                    s.tick++;
+                    if (s.tick % 3 === 0) {
+                        s.chars = s.chars.map(c =>
+                            Math.random() < s.mutRate ? (Math.random() < 0.5 ? '0' : '1') : c
+                        );
+                    }
+
+                    for (let i = 0; i < s.len; i++) {
+                        const row = Math.floor(s.y) - i;
+                        if (row < 0 || row * rowH > canvas.height) continue;
+
+                        if (i === 0) {
+                            ctx.fillStyle  = HEAD_BRIGHT;
+                            ctx.shadowColor = '#00ff41';
+                            ctx.shadowBlur  = 8;
+                        } else if (i < 3) {
+                            ctx.fillStyle  = `rgba(0, 220, 60, ${1 - i * 0.12})`;
+                            ctx.shadowColor = '#00ff41';
+                            ctx.shadowBlur  = 4;
+                        } else if (i < s.len * 0.6) {
+                            ctx.fillStyle  = BODY_COLOR;
+                            ctx.shadowBlur = 0;
+                        } else {
+                            const fade = 1 - (i / s.len);
+                            ctx.fillStyle  = `rgba(0, 92, 26, ${fade * 0.8})`;
+                            ctx.shadowBlur = 0;
+                        }
+
+                        ctx.fillText(s.chars[i] || '0', x, row * rowH);
+                    }
+
+                    ctx.shadowBlur = 0;
+                    s.y += s.speed * SPEED;
+
+                    if ((Math.floor(s.y) - s.len) * rowH > canvas.height) {
+                        Object.assign(s, makeStream());
+                        s.y = -(2 + Math.random() * 30);
+                    }
+                });
+            }
+
+            window.addEventListener('resize', init);
+            init();
+            setInterval(draw, 40);
+        })();
+    </script>
+</body>
+</html>

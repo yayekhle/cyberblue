@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniCblue Portal - Login</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #00ff41;
+            --green-bright: #39ff6e;
+            --green-mid: #00cc33;
+            --green-glow: rgba(0, 255, 65, 0.5);
+            --bg: #1a2e1a;
+            --text: #ffffff;
+            --text-soft: #c8e8c8;
+            --text-dim: #7ab87a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #1a2e1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0,255,65,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 80% 50%, rgba(0,200,50,0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(0,0,0,0.05) 3px,
+                rgba(0,0,0,0.05) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            opacity: 0.45;
+        }
+
+        /* ── PANEL ── */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            background: rgba(15, 38, 15, 0.9);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 2.5rem 2.5rem 2rem;
+            border: 1px solid rgba(0,255,65,0.42);
+            border-radius: 4px;
+            width: 100%;
+            max-width: 430px;
+            box-shadow:
+                0 0 0 1px rgba(0,255,65,0.08),
+                0 0 50px rgba(0,255,65,0.28),
+                0 30px 60px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(0,255,65,0.15);
+            animation: bootup 0.7s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        .corner { position: absolute; width: 12px; height: 12px; }
+        .corner::before, .corner::after { content: ''; position: absolute; background: var(--green); }
+        .corner::before { width: 100%; height: 2px; top: 0; left: 0; }
+        .corner::after  { width: 2px; height: 100%; top: 0; left: 0; }
+        .corner.tl { top: -1px; left: -1px; }
+        .corner.tr { top: -1px; right: -1px; transform: scaleX(-1); }
+        .corner.bl { bottom: -1px; left: -1px; transform: scaleY(-1); }
+        .corner.br { bottom: -1px; right: -1px; transform: scale(-1,-1); }
+
+        @keyframes bootup {
+            from { opacity: 0; transform: translateY(18px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ── LOGO ── */
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0,255,65,0.18);
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px; height: 58px;
+            border: 2px solid var(--green);
+            border-radius: 50%;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 0 22px var(--green-glow), inset 0 0 15px rgba(0,255,65,0.1);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .logo-icon i {
+            color: var(--green);
+            font-size: 1.4rem;
+            text-shadow: 0 0 12px var(--green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 22px var(--green-glow), inset 0 0 15px rgba(0,255,65,0.1); }
+            50%       { box-shadow: 0 0 38px rgba(0,255,65,0.7), inset 0 0 22px rgba(0,255,65,0.18); }
+        }
+
+        .logo h1 {
+            color: var(--green);
+            font-size: 1.95rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-shadow: 0 0 22px rgba(0,255,65,0.55);
+            text-transform: uppercase;
+        }
+
+        .logo .tagline {
+            color: var(--text-soft);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-top: 0.4rem;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--green-mid);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--green);
+            animation: blink 1.2s step-end infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* ── ALERTS ── */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            padding: 0.8rem 1rem;
+            border-radius: 3px;
+            margin-bottom: 1.1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .alert .alert-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+
+        .alert-danger {
+            background: rgba(255, 50, 70, 0.22);
+            border: 1px solid rgba(255, 60, 80, 0.6);
+            border-left: 4px solid #ff3c50;
+            color: #ffffff;
+        }
+        .alert-danger .alert-icon { color: #ff6070; }
+
+        .alert-success {
+            background: rgba(0,255,65,0.12);
+            border: 1px solid rgba(0,255,65,0.5);
+            border-left: 4px solid var(--green);
+            color: #ffffff;
+        }
+        .alert-success .alert-icon { color: var(--green); }
+
+        /* inline field errors */
+        .field-error {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.42rem;
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .field-error i { font-size: 0.68rem; color: #ff6070; }
+
+        /* ── FORM ── */
+        .form-group { margin-bottom: 1.3rem; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: var(--text-soft);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-wrap i.input-ico {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.7rem;
+            background: rgba(0, 25, 0, 0.55);
+            border: 1px solid rgba(0,255,65,0.26);
+            border-radius: 3px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.87rem;
+            font-weight: 500;
+            color: var(--text);
+            transition: all 0.2s ease;
+            caret-color: var(--green);
+        }
+
+        .form-control::placeholder {
+            color: rgba(100,180,100,0.38);
+            font-weight: 400;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--green);
+            background: rgba(0, 38, 0, 0.65);
+            box-shadow: 0 0 0 3px rgba(0,255,65,0.1), 0 0 18px rgba(0,255,65,0.18);
+            color: #eafcea;
+        }
+
+        .input-wrap:focus-within i.input-ico { color: var(--green); }
+
+        .form-control.has-error {
+            border-color: rgba(255,60,80,0.55);
+        }
+
+        /* ── REMEMBER ME ── */
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 0.75rem;
+        }
+
+        .remember-me input[type="checkbox"] {
+            appearance: none;
+            width: 15px; height: 15px;
+            border: 1px solid rgba(0,255,65,0.38);
+            background: rgba(0,20,0,0.55);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .remember-me input[type="checkbox"]:checked {
+            background: rgba(0,255,65,0.16);
+            border-color: var(--green);
+        }
+
+        .remember-me input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px; top: 1px;
+            width: 5px; height: 9px;
+            border: 2px solid var(--green);
+            border-top: none; border-left: none;
+            transform: rotate(45deg);
+        }
+
+        .remember-me label {
+            color: var(--text-soft);
+            font-size: 0.74rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* ── BUTTON ── */
+        .btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, rgba(0,255,65,0.14), rgba(0,200,50,0.08));
+            border: 1px solid var(--green);
+            border-radius: 3px;
+            color: var(--green);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            margin-top: 1.3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 18px rgba(0,255,65,0.14);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--green);
+            transform: translateY(101%);
+            transition: transform 0.25s ease;
+        }
+
+        .btn span { position: relative; z-index: 1; }
+
+        .btn:hover {
+            color: #001a00;
+            box-shadow: 0 0 32px rgba(0,255,65,0.48);
+            transform: translateY(-1px);
+        }
+
+        .btn:hover::before { transform: translateY(0); }
+        .btn:active { transform: translateY(0) scale(0.99); }
+
+        /* ── SECURITY NOTICE ── */
+        .security-notice {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.7rem;
+            background: rgba(0,255,65,0.04);
+            border: 1px solid rgba(0,255,65,0.18);
+            border-radius: 3px;
+            padding: 0.8rem 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .security-notice i {
+            color: var(--green-mid);
+            font-size: 0.82rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .security-notice p {
+            color: var(--text-soft);
+            font-size: 0.7rem;
+            font-weight: 400;
+            line-height: 1.55;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,255,65,0.1);
+            color: var(--text-dim);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="login-container">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+            <h1>MiniCblue</h1>
+            <div class="tagline">Secure Portal Access</div>
+            <div class="status-bar">
+                <span class="status-dot"></span>
+                System Online &nbsp;·&nbsp; Encrypted &nbsp;·&nbsp; Auth Required
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+            <i class="alert-icon fas {{ 'fa-circle-xmark' if category == 'error' else 'fa-circle-check' }}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                <label for="username">{{ form.username.label.text }}</label>
+                <div class="input-wrap">
+                    {{ form.username(class="form-control" + (" has-error" if form.username.errors else ""), placeholder="Enter your username") }}
+                    <i class="input-ico fas fa-user"></i>
+                </div>
+                {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                <div class="field-error"><i class="fas fa-triangle-exclamation"></i> {{ error }}</div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="password">{{ form.password.label.text }}</label>
+                <div class="input-wrap">
+                    {{ form.password(class="form-control" + (" has-error" if form.password.errors else ""), placeholder="Enter your password") }}
+                    <i class="input-ico fas fa-lock"></i>
+                </div>
+                {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                <div class="field-error"><i class="fas fa-triangle-exclamation"></i> {{ error }}</div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="remember-me">
+                {{ form.remember_me() }}
+                <label for="remember_me">{{ form.remember_me.label.text }}</label>
+            </div>
+
+            <button type="submit" class="btn"><span>Access Portal</span></button>
+        </form>
+
+        <div class="security-notice">
+            <i class="fas fa-circle-info"></i>
+            <p>Authorized personnel only. All access attempts are logged, monitored, and subject to audit.</p>
+        </div>
+
+        <div class="footer">
+            &copy; 2025 MiniCblue Platform &nbsp;·&nbsp; Secure &bull; Reliable &bull; Powerful
+        </div>
+    </div>
+
+    <script>
+        /* ── BINARY CMATRIX RAIN ─────────────────────────────── */
+        (function () {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx    = canvas.getContext('2d');
+
+            const FONT_SIZE   = 15;
+            const SPEED       = 0.6;          // rows per frame (< 1 = slow)
+            const FADE_ALPHA  = 0.045;        // trail fade speed
+            const HEAD_BRIGHT = '#ccffcc';    // leading-cell colour
+            const BODY_COLOR  = '#00cc33';    // stream body colour
+            const DIM_COLOR   = '#005c1a';    // tail colour
+
+            let cols, streams;
+
+            function init() {
+                canvas.width  = window.innerWidth;
+                canvas.height = window.innerHeight;
+                cols    = Math.floor(canvas.width / FONT_SIZE);
+                // Each stream: position (fractional row), speed multiplier, length, chars[]
+                streams = Array.from({ length: cols }, () => makeStream());
+                ctx.fillStyle = '#162016';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function makeStream() {
+                const len = 8 + Math.floor(Math.random() * 20);
+                return {
+                    y:      -(Math.random() * 40),           // start above screen
+                    speed:  0.3 + Math.random() * 0.7,
+                    len,
+                    chars:  Array.from({ length: len }, () => Math.random() < 0.5 ? '0' : '1'),
+                    tick:   0,
+                    mutRate: 0.04 + Math.random() * 0.08,   // how often chars mutate
+                };
+            }
+
+            function draw() {
+                // Fade background (creates the trail effect)
+                ctx.fillStyle = `rgba(22, 32, 22, ${FADE_ALPHA})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.font = `bold ${FONT_SIZE}px 'Courier New', monospace`;
+                ctx.textAlign = 'center';
+
+                const rowH = FONT_SIZE;
+                const x0   = FONT_SIZE / 2;
+
+                streams.forEach((s, col) => {
+                    const x = x0 + col * FONT_SIZE;
+
+                    // Randomly mutate chars
+                    s.tick++;
+                    if (s.tick % 3 === 0) {
+                        s.chars = s.chars.map(c =>
+                            Math.random() < s.mutRate ? (Math.random() < 0.5 ? '0' : '1') : c
+                        );
+                    }
+
+                    // Draw each cell in the stream
+                    for (let i = 0; i < s.len; i++) {
+                        const row = Math.floor(s.y) - i;
+                        if (row < 0 || row * rowH > canvas.height) continue;
+
+                        const y = row * rowH;
+
+                        if (i === 0) {
+                            // Leading cell — bright white-green flash
+                            ctx.fillStyle = HEAD_BRIGHT;
+                            ctx.shadowColor = '#00ff41';
+                            ctx.shadowBlur  = 8;
+                        } else if (i < 3) {
+                            // Near head — bright green
+                            ctx.fillStyle = `rgba(0, 220, 60, ${1 - i * 0.12})`;
+                            ctx.shadowColor = '#00ff41';
+                            ctx.shadowBlur  = 4;
+                        } else if (i < s.len * 0.6) {
+                            // Mid body
+                            ctx.fillStyle = BODY_COLOR;
+                            ctx.shadowBlur = 0;
+                        } else {
+                            // Tail — dimming out
+                            const fade = 1 - (i / s.len);
+                            ctx.fillStyle = `rgba(0, 92, 26, ${fade * 0.8})`;
+                            ctx.shadowBlur = 0;
+                        }
+
+                        ctx.fillText(s.chars[i] || '0', x, y);
+                    }
+
+                    ctx.shadowBlur = 0;
+
+                    // Advance stream
+                    s.y += s.speed * SPEED;
+
+                    // Reset when tail leaves screen
+                    if ((Math.floor(s.y) - s.len) * rowH > canvas.height) {
+                        Object.assign(s, makeStream());
+                        s.y = -(2 + Math.random() * 30);
+                    }
+                });
+            }
+
+            window.addEventListener('resize', init);
+            init();
+            setInterval(draw, 40);
+        })();
+
+        /* ── SUBMIT STATE ───────────────────────────────────── */
+        document.querySelector('form').addEventListener('submit', function () {
+            const s = this.querySelector('.btn span');
+            if (s) s.textContent = 'Authenticating...';
+        });
+    </script>
+</body>
+
+</html>
