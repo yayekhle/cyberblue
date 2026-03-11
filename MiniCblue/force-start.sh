@@ -101,7 +101,7 @@ fi
 
 echo ""
 echo -e "${BLUE}🚀 Step 3: Starting all CyberBlue services...${NC}"
-echo "   This may take 2-5 minutes to bring up all 30+ containers"
+echo "   This may take 2-5 minutes to bring up all containers"
 echo ""
 
 # Start all services with docker-compose
@@ -127,7 +127,7 @@ echo -e "${BLUE}🔍 Step 5: Verifying deployment...${NC}"
 RUNNING_CONTAINERS=$(sudo docker ps --format "table {{.Names}}" | grep -v NAMES | wc -l 2>/dev/null || echo "0")
 echo "   Running containers: $RUNNING_CONTAINERS"
 
-if [ "$RUNNING_CONTAINERS" -ge 25 ]; then
+if [ "$RUNNING_CONTAINERS" -ge 12 ]; then
     echo -e "${GREEN}✅ Force start completed successfully!${NC}"
     DEPLOYMENT_STATUS="SUCCESS"
 else
@@ -150,12 +150,13 @@ echo "   🔒 HTTPS: https://$(hostname -I | awk '{print $1}'):5443"
 echo "   🔑 Login: admin / cyberblue123"
 echo ""
 echo "🛡️  Individual Tools:"
-echo "   • Wazuh: http://$(hostname -I | awk '{print $1}'):7001"
+echo "   • Wazuh: https://$(hostname -I | awk '{print $1}'):7001"
 echo "   • MISP: https://$(hostname -I | awk '{print $1}'):7003"
-echo "   • Arkime: http://$(hostname -I | awk '{print $1}'):7008"
-echo "   • Caldera: http://$(hostname -I | awk '{print $1}'):7009"
-echo "   • OpenVAS: http://$(hostname -I | awk '{print $1}'):7014"
-echo "   • ...and many more on ports 7000-7099!"
+echo "   • TheHive: http://$(hostname -I | awk '{print $1}'):7005"
+echo "   • Cortex: http://$(hostname -I | awk '{print $1}'):7006"
+echo "   • Velociraptor: https://$(hostname -I | awk '{print $1}'):7000"
+echo "   • EveBox: http://$(hostname -I | awk '{print $1}'):7015"
+echo "   • Portainer: https://$(hostname -I | awk '{print $1}'):9443"
 echo ""
 echo -e "${CYAN}💡 Tip: Use the portal to manage all services from one interface${NC}"
 echo ""

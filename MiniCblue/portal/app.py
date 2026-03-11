@@ -302,21 +302,14 @@ class ContainerMonitor:
         # Map tool names to possible container names (with fallbacks)
         tool_container_map = {
             "velociraptor": ["velociraptor"],
-            "wazuh": ["wazuh", "wazuh-dashboard", "cyber-blue-test-wazuh.dashboard-1"],
-            "wazuh-dashboard": ["wazuh", "wazuh-dashboard", "cyber-blue-test-wazuh.dashboard-1"],
-            "misp": ["misp", "misp-core", "cyber-blue-test-misp-core-1"],
-            "cyberchef": ["cyber-blue-test-cyberchef-1", "cyberchef"],
-            "thehive": ["cyber-blue-test-thehive-1", "thehive"],
-            "cortex": ["cyber-blue-test-cortex-1", "cortex"],
-            "fleetdm": ["fleet-server", "cyber-blue-test-fleet-server-1"],
-            "arkime": ["arkime-test", "arkime", "cyber-blue-test-arkime-1"],
-            "caldera": ["caldera", "cyber-blue-test-caldera-1"],
+            "wazuh": ["wazuh-dashboard", "wazuh", "cyber-blue-test-wazuh.dashboard-1"],
+            "wazuh-dashboard": ["wazuh-dashboard", "wazuh", "cyber-blue-test-wazuh.dashboard-1"],
+            "misp": ["misp-core", "misp", "cyber-blue-test-misp-core-1"],
+            "thehive": ["thehive", "cyber-blue-test-thehive-1"],
+            "cortex": ["cortex", "cyber-blue-test-cortex-1"],
+            "arkime": ["arkime", "arkime-test", "cyber-blue-test-arkime-1"],
             "evebox": ["evebox", "cyber-blue-test-evebox-1"],
-            "wireshark": ["wireshark", "cyber-blue-test-wireshark-1"],
-            "mitre": ["mitre-navigator", "cyber-blue-test-mitre-navigator-1"],
-            "mitre-navigator": ["mitre-navigator", "cyber-blue-test-mitre-navigator-1"],
             "portainer": ["portainer", "cyber-blue-test-portainer-1"],
-            "shuffle": ["shuffle-frontend", "cyber-blue-test-shuffle-frontend-1"]
         }
 
         def find_container_name(possible_names):
@@ -352,21 +345,14 @@ class ContainerMonitor:
         # Map tool names to possible container names (with fallbacks)
         tool_container_map = {
             "velociraptor": ["velociraptor"],
-            "wazuh": ["wazuh", "wazuh-dashboard", "cyber-blue-test-wazuh.dashboard-1"],
-            "wazuh-dashboard": ["wazuh", "wazuh-dashboard", "cyber-blue-test-wazuh.dashboard-1"],
-            "misp": ["misp", "misp-core", "cyber-blue-test-misp-core-1"],
-            "cyberchef": ["cyber-blue-test-cyberchef-1", "cyberchef"],
-            "thehive": ["cyber-blue-test-thehive-1", "thehive"],
-            "cortex": ["cyber-blue-test-cortex-1", "cortex"],
-            "fleetdm": ["fleet-server", "cyber-blue-test-fleet-server-1"],
-            "arkime": ["arkime-test", "arkime", "cyber-blue-test-arkime-1"],
-            "caldera": ["caldera", "cyber-blue-test-caldera-1"],
+            "wazuh": ["wazuh-dashboard", "wazuh", "cyber-blue-test-wazuh.dashboard-1"],
+            "wazuh-dashboard": ["wazuh-dashboard", "wazuh", "cyber-blue-test-wazuh.dashboard-1"],
+            "misp": ["misp-core", "misp", "cyber-blue-test-misp-core-1"],
+            "thehive": ["thehive", "cyber-blue-test-thehive-1"],
+            "cortex": ["cortex", "cyber-blue-test-cortex-1"],
+            "arkime": ["arkime", "arkime-test", "cyber-blue-test-arkime-1"],
             "evebox": ["evebox", "cyber-blue-test-evebox-1"],
-            "wireshark": ["wireshark", "cyber-blue-test-wireshark-1"],
-            "mitre": ["mitre-navigator", "cyber-blue-test-mitre-navigator-1"],
-            "mitre-navigator": ["mitre-navigator", "cyber-blue-test-mitre-navigator-1"],
             "portainer": ["portainer", "cyber-blue-test-portainer-1"],
-            "shuffle": ["shuffle-frontend", "cyber-blue-test-shuffle-frontend-1"]
         }
 
         if tool_name in tool_container_map:
@@ -967,19 +953,6 @@ def get_tools():
             }
         },
         {
-            "name": "Shuffle",
-            "description": "Security automation and orchestration platform for building, testing, and deploying security workflows.",
-            "port": 7002,
-            "icon": "fas fa-random",
-            "category": "soar",
-            "categoryName": "SOAR",
-            "protocols": ["https"],
-            "credentials": {
-                "username": "admin",
-                "password": "password"
-            }
-        },
-        {
             "name": "MISP",
             "description": "Threat Intelligence Platform for sharing, storing, and correlating indicators of compromise.",
             "port": 7003,
@@ -990,18 +963,6 @@ def get_tools():
             "credentials": {
                 "username": "admin@admin.test",
                 "password": "admin"
-            }
-        },
-        {
-            "name": "CyberChef",
-            "description": "Cyber Swiss Army Knife for data analysis, encoding, decoding, and forensics operations.",
-            "port": 7004,
-            "icon": "fas fa-utensils",
-            "category": "utility",
-            "categoryName": "Utility",
-            "protocols": ["http"],
-            "credentials": {
-                "note": "No authentication required"
             }
         },
         {
@@ -1031,38 +992,12 @@ def get_tools():
             }
         },
         {
-            "name": "FleetDM",
-            "description": "Osquery-based endpoint visibility and fleet management platform.",
-            "port": 7007,
-            "icon": "fas fa-desktop",
-            "category": "management",
-            "categoryName": "Management",
-            "protocols": ["http"],
-            "credentials": {
-                "username": "admin",
-                "password": "admin123"
-            }
-        },
-        {
             "name": "Arkime",
             "description": "Full packet capture and session search engine for network analysis.",
             "port": 7008,
             "icon": "fas fa-network-wired",
             "category": "network analysis",
             "categoryName": "NETWORK ANALYSIS",
-            "protocols": ["http"],
-            "credentials": {
-                "username": "admin",
-                "password": "admin"
-            }
-        },
-        {
-            "name": "Caldera",
-            "description": "Automated adversary emulation platform for security testing and red team operations.",
-            "port": 7009,
-            "icon": "fas fa-chess-king",
-            "category": "attack-simulation",
-            "categoryName": "ATTACK SIMULATION",
             "protocols": ["http"],
             "credentials": {
                 "username": "admin",
@@ -1077,31 +1012,6 @@ def get_tools():
             "category": "ids",
             "categoryName": "INTRUSION DETECTION",
             "protocols": ["https"],
-            "credentials": {
-                "note": "No authentication required"
-            }
-        },
-        {
-            "name": "Wireshark",
-            "description": "Network protocol analyzer for deep packet inspection and network troubleshooting.",
-            "port": 7099,
-            "icon": "fas fa-filter",
-            "category": "network analysis",
-            "categoryName": "NETWORK ANALYSIS",
-            "protocols": ["https"],
-            "credentials": {
-                "username": "admin",
-                "password": "cyberblue"
-            }
-        },
-        {
-            "name": "MITRE Navigator",
-            "description": "Interactive ATT&CK matrix for threat modeling and attack path visualization.",
-            "port": 7013,
-            "icon": "fas fa-sitemap",
-            "category": "cti",
-            "categoryName": "CTI",
-            "protocols": ["http"],
             "credentials": {
                 "note": "No authentication required"
             }
@@ -1159,12 +1069,11 @@ def get_dashboard_metrics():
         categories = {
             "dfir": ["velociraptor"],
             "siem": ["wazuh", "wazuh-dashboard"],
-            "soar": ["shuffle", "thehive", "cortex", "caldera"],
-            "cti": ["misp", "mitre-navigator"],
             "ids": ["evebox"],
-            "network analysis": ["wireshark", "arkime"],
-            "utility": ["cyberchef"],
-            "management": ["fleetdm", "portainer"]
+            "soar": ["thehive", "cortex"],
+            "cti": ["misp"],
+            "network analysis": ["arkime"],
+            "management": ["portainer"]
         }
 
         category_health = {}
@@ -2078,65 +1987,7 @@ def generate_agent_configs():
             with open(f'{package_dir}/INSTALL.txt', 'w') as f:
                 f.write(instructions)
 
-        # ==================== CALDERA ====================
-        elif agent_type == 'caldera':
-            # Validate OS type for Caldera
-            valid_os_types = ['windows', 'linux', 'macos']
-            if os_type not in valid_os_types:
-                return jsonify({'success': False, 'error': f'Invalid OS type for Caldera'}), 400
-
-            # Setup for Caldera
-            session_id = str(uuid.uuid4())[:8]
-            session_dir = f'/caldera/agents/generated/{session_id}'
-            os.makedirs(session_dir, exist_ok=True)
-
-            template_dir = '/caldera/agents/templates'
-
-            # Map OS to deployment instructions
-            deploy_map = {
-                'windows': 'DEPLOY_WINDOWS.txt',
-                'linux': 'DEPLOY_LINUX.txt',
-                'macos': 'DEPLOY_MACOS.txt'
-            }
-
-            instruction_file = deploy_map[os_type]
-
-            # Generate instructions with server IP
-            with open(f'{template_dir}/{instruction_file}', 'r') as f:
-                instructions = f.read()
-            instructions = instructions.replace('{{SERVER_IP}}', server_ip)
-
-            # Create package directory
-            package_name = f'caldera-sandcat-{os_type}'
-            package_dir = f'{session_dir}/{package_name}'
-            os.makedirs(package_dir, exist_ok=True)
-
-            # Write deployment instructions
-            with open(f'{package_dir}/DEPLOY.txt', 'w') as f:
-                f.write(instructions)
-
-            # Create quick reference card
-            quick_ref = f"""CALDERA SANDCAT DEPLOYMENT
-Server: {server_ip}:7009
-
-Windows: See DEPLOY.txt for PowerShell command
-Linux: curl -s -X POST -H "file:sandcat.go" -H "platform:linux" http://{server_ip}:7009/file/download > sandcat && chmod +x sandcat && ./sandcat -server {server_ip}:7009 &
-macOS: curl -s -X POST -H "file:sandcat.go" -H "platform:darwin" http://{server_ip}:7009/file/download -o sandcat && chmod +x sandcat && ./sandcat -server {server_ip}:7009 &
-
-Access Caldera: http://{server_ip}:7009
-Login: admin / admin
-
-⚠️  RED TEAM TOOL - AUTHORIZED USE ONLY ⚠️
-"""
-            with open(f'{package_dir}/QUICK_START.txt', 'w') as f:
-                f.write(quick_ref)
-
         # ==================== FLEET (DISABLED - Coming Soon) ====================
-        elif agent_type == 'fleet':
-            # Temporarily disabled due to HTTP/HTTPS TLS configuration complexity
-            return jsonify({'success': False, 'error': 'Fleet agent deployment coming soon - requires additional TLS configuration'}), 400
-
-        elif False and agent_type == 'fleet':  # Disabled code below
             # Validate OS type for Fleet
             valid_os_types = ['windows', 'ubuntu', 'centos', 'macos']
             if os_type not in valid_os_types:
@@ -2277,8 +2128,6 @@ def download_agent_file(session_id, filename):
         possible_paths = [
             f'/velociraptor/agents/generated/{session_id}/{filename}',
             f'/wazuh/agents/generated/{session_id}/{filename}',
-            f'/fleet/agents/generated/{session_id}/{filename}',
-            f'/caldera/agents/generated/{session_id}/{filename}'
         ]
 
         file_path = None

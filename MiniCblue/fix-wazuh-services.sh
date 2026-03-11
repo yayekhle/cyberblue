@@ -42,8 +42,8 @@ echo -e "${NC}"
 
 # Step 1: Complete cleanup of Wazuh components
 log_info "Step 1: Stopping and removing all Wazuh components..."
-sudo docker stop wazuh-indexer wazuh-dashboard wazuh-manager wazuh-cert-genrator 2>/dev/null || true
-sudo docker rm wazuh-indexer wazuh-dashboard wazuh-manager wazuh-cert-genrator 2>/dev/null || true
+sudo docker stop wazuh-indexer wazuh-dashboard wazuh-manager wazuh-cert-generator 2>/dev/null || true
+sudo docker rm wazuh-indexer wazuh-dashboard wazuh-manager wazuh-cert-generator 2>/dev/null || true
 log "All Wazuh containers stopped and removed"
 
 # Step 2: Complete SSL certificate cleanup
@@ -79,7 +79,7 @@ if [[ -f "wazuh/config/wazuh_indexer_ssl_certs/admin.pem" ]]; then
     log "SSL certificates generated successfully"
 else
     log_error "Certificate generation failed"
-    sudo docker logs wazuh-cert-genrator --tail 20
+    sudo docker logs wazuh-cert-generator --tail 20
     exit 1
 fi
 
@@ -131,7 +131,7 @@ log_info "Waiting for Wazuh Dashboard to initialize (45 seconds)..."
 sleep 45
 
 # Check dashboard health
-if curl -s http://localhost:7001 >/dev/null 2>&1; then
+if curl -s -k https://localhost:7001 >/dev/null 2>&1; then
     log "Wazuh Dashboard is accessible"
 else
     log_warn "Wazuh Dashboard health check failed, but may still be starting..."
@@ -148,7 +148,7 @@ WAZUH_RUNNING=$(sudo docker ps | grep -c "wazuh.*Up" || echo "0")
 echo ""
 if [[ "$WAZUH_RUNNING" -eq 3 ]]; then
     log "All 3 Wazuh services are running successfully!"
-    echo -e "${GREEN}✅ Wazuh Dashboard: http://$(hostname -I | awk '{print $1}'):7001${NC}"
+    echo -e "${GREEN}✅ Wazuh Dashboard: https://$(hostname -I | awk '{print $1}'):7001${NC}"
     echo -e "${GREEN}✅ Credentials: admin / SecretPassword${NC}"
 elif [[ "$WAZUH_RUNNING" -eq 2 ]]; then
     log_warn "2/3 Wazuh services are running (may need more time)"
@@ -162,7 +162,7 @@ fi
 
 # Step 8: Restart certificate generator to clean state
 log_info "Step 8: Cleaning up certificate generator..."
-sudo docker stop wazuh-cert-genrator 2>/dev/null || true
+sudo docker stop wazuh-cert-generator 2>/dev/null || true
 
 echo ""
 echo -e "${GREEN}🎉 =================================="
@@ -175,6 +175,6 @@ echo "   Running containers: $TOTAL_RUNNING"
 echo ""
 echo -e "${CYAN}🌐 Next Steps:${NC}"
 echo "1. Check CyberBlue Portal: https://$(hostname -I | awk '{print $1}'):5443"
-echo "2. Should now show 15/15 services running"
-echo "3. Access Wazuh at: http://$(hostname -I | awk '{print $1}'):7001"
+echo "2. Should now show all services running"
+echo "3. Access Wazuh at: https://$(hostname -I | awk '{print $1}'):7001"
 echo ""

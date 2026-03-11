@@ -17,7 +17,15 @@
 # ✅ Works on AWS, Azure, GCP, VMware, VirtualBox, bare metal
 # ============================================================================
 
-set -e  # Exit on error
+# NOTE: We intentionally do NOT use 'set -e' here.
+# 'set -e' would silently kill the script if any download, git clone,
+# or optional step fails — causing docker images to never get installed
+# with no clear error message. Instead we handle errors explicitly per-step.
+# Critical steps use explicit checks; optional steps use '|| true'.
+
+# Custom handler: print a clear error with line number if something critical fails
+trap 'echo -e "\n${RED}❌ FATAL ERROR at line ${LINENO}: last command exited with code $?${NC}\n   Check the output above for the failing step.\n   Re-run the script after fixing the issue.\n" >&2' ERR
+set -E  # Ensure ERR trap fires inside functions too
 
 # Colors for output
 RED='\033[0;31m'
@@ -92,23 +100,26 @@ show_progress() {
 # BANNER WITH CYBERBLUE LOGO
 # ============================================================================
 clear
+
 echo ""
-echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                                                                          ║${NC}"
-echo -e "${CYAN}║     ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██████╗ ██╗     ██╗   ██╗ ║${NC}"
-echo -e "${CYAN}║    ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██╔══██╗██║     ██║   ██║ ║${NC}"
-echo -e "${BLUE}║    ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝██████╔╝██║     ██║   ██║ ║${NC}"
-echo -e "${BLUE}║    ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██╔══██╗██║     ██║   ██║ ║${NC}"
-echo -e "${CYAN}║    ╚██████╗   ██║   ██████╔╝███████╗██║  ██║██████╔╝███████╗╚██████╔╝ ║${NC}"
-echo -e "${CYAN}║     ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝ ╚═════╝  ║${NC}"
-echo -e "${BLUE}║                                                                          ║${NC}"
-echo -e "${BLUE}║                     ${MAGENTA}🔷 SOC PLATFORM INSTALLER 🔷${BLUE}                      ║${NC}"
-echo -e "${BLUE}║                                                                          ║${NC}"
-echo -e "${BLUE}║              ${GREEN}✅ Fully Automated - Live Progress Monitoring${BLUE}              ║${NC}"
-echo -e "${BLUE}║              ${GREEN}✅ Zero User Intervention Required${BLUE}                        ║${NC}"
-echo -e "${BLUE}║              ${GREEN}✅ 15+ Security Tools in One Platform${BLUE}                     ║${NC}"
-echo -e "${BLUE}║                                                                          ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║                                                                                      ║${NC}"
+echo -e "${CYAN}║  /\$\$      /\$\$ /\$\$           /\$\$  /\$\$\$\$\$\$  /\$\$\$\$\$\$\$  /\$\$                    ║${NC}"
+echo -e "${CYAN}║ | \$\$\$    /\$\$\$|__/          |__/ /\$\$__  \$\$| \$\$__  \$\$| \$\$                    ║${NC}"
+echo -e "${CYAN}║ | \$\$\$\$  /\$\$\$\$ /\$\$ /\$\$\$\$\$\$\$  /\$\$| \$\$  \__/| \$\$  \ \$\$| \$\$ /\$\$   /\$\$  /\$\$\$\$\$\$ ║${NC}"
+echo -e "${CYAN}║ | \$\$ \$\$\$/\$\$ \$\$| \$\$| \$\$__  \$\$| \$\$| \$\$      | \$\$\$\$\$\$\$ | \$\$| \$\$  | \$\$ /\$\$__  \$\$║${NC}"
+echo -e "${BLUE}║ | \$\$  \$\$\$| \$\$| \$\$| \$\$  \ \$\$| \$\$| \$\$      | \$\$__  \$\$| \$\$| \$\$  | \$\$| \$\$\$\$\$\$\$\$║${NC}"
+echo -e "${BLUE}║ | \$\$\  \$ | \$\$| \$\$| \$\$  | \$\$| \$\$| \$\$    \$\$| \$\$  \ \$\$| \$\$| \$\$  | \$\$| \$\$_____/║${NC}"
+echo -e "${CYAN}║ | \$\$ \/  | \$\$| \$\$| \$\$  | \$\$| \$\$|  \$\$\$\$\$\$/| \$\$\$\$\$\$\$/| \$\$|  \$\$\$\$\$\$/|  \$\$\$\$\$\$\$║${NC}"
+echo -e "${CYAN}║ |__/     |__/|__/|__/  |__/|__/ \______/ |_______/ |__/ \______/  \_______/║${NC}"
+echo -e "${BLUE}║                                                                                      ║${NC}"
+echo -e "${BLUE}║                          ${MAGENTA}🔷 SOC PLATFORM INSTALLER 🔷${BLUE}                           ║${NC}"
+echo -e "${BLUE}║                                                                                      ║${NC}"
+echo -e "${BLUE}║                 ${GREEN}✅ Fully Automated - Live Progress Monitoring${BLUE}                 ║${NC}"
+echo -e "${BLUE}║                 ${GREEN}✅ Zero User Intervention Required${BLUE}                           ║${NC}"
+echo -e "${BLUE}║                 ${GREEN}✅ 8 Security Tools in One Platform${BLUE}                          ║${NC}"
+echo -e "${BLUE}║                                                                                      ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${YELLOW}║  ⚠️  EDUCATIONAL & TRAINING ENVIRONMENT ONLY ⚠️                          ║${NC}"
@@ -129,7 +140,7 @@ echo -e "${GREEN}║  🚀 INSTALLATION STARTING                                
 echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${CYAN}   📺 Watch live progress - everything happens in real-time!${NC}"
-echo -e "${CYAN}   ⏱️  Estimated time:305 minutes${NC}"
+echo -e "${CYAN}   ⏱️  Estimated time: 20-30 minutes${NC}"
 echo -e "${CYAN}   ☕ Grab a coffee and watch the magic!${NC}"
 echo ""
 echo -e "${MAGENTA}   💡 TIP: You'll see every command and output - nothing is hidden!${NC}"
@@ -227,6 +238,15 @@ if $PREREQS_NEEDED; then
     echo -e "${BLUE}👤 Step 1.4: User Permissions${NC}"
     echo -e "${CYAN}   [PERMS]${NC} Adding user to docker group..."
     sudo usermod -aG docker $USER
+    # Apply the new group membership immediately for the rest of this script
+    # without requiring a logout/login. This is the fix for the 'permission denied'
+    # issue when running docker commands later in the same session.
+    if id -nG "$USER" | grep -qw docker; then
+        echo -e "${CYAN}   [PERMS]${NC} Docker group already active in this session"
+    else
+        echo -e "${CYAN}   [PERMS]${NC} Refreshing group membership for current session..."
+        exec sg docker "$0 $*" || true  # Re-exec this script under the docker group
+    fi
     echo -e "${CYAN}   [PERMS]${NC} Setting docker socket permissions..."
     sudo chown root:docker /var/run/docker.sock 2>/dev/null || true
     sudo chmod 660 /var/run/docker.sock 2>/dev/null || true
@@ -350,7 +370,7 @@ DAEMON_EOF
     echo ""
     echo ""
     echo -e "${BLUE}🔍 Step 1.9: Port Conflict Check${NC}"
-    REQUIRED_PORTS="5443 7000 7001 7002 7003 7004 7005 7006 7007 7008 7009 7010 7011 7012 7013 7014 7015 9200 9443 1514 1515 55000"
+    REQUIRED_PORTS="5443 7000 7001 7003 7005 7006 7008 7015 9200 9443 1514 1515 55000"
     CONFLICTS=()
     
     echo -e "${CYAN}   [CHECK]${NC} Scanning required ports..."
@@ -485,27 +505,17 @@ echo ""
 cd "$SCRIPT_DIR"
 
 echo -e "${BLUE}🧹 Step 2.1: Cleanup${NC}"
-if [ -d "attack-navigator" ]; then
-    echo -e "${CYAN}   [CLEANUP]${NC} Removing existing attack-navigator/ directory..."
-    sudo rm -rf attack-navigator/
-fi
-if [ -d "wireshark" ]; then
-    echo -e "${CYAN}   [CLEANUP]${NC} Removing existing wireshark/ directory..."
-    sudo rm -rf wireshark/
-fi
+# Remove any leftover directories from previous installs
+for leftover_dir in attack-navigator wireshark caldera shuffle fleet; do
+    if [ -d "$leftover_dir" ]; then
+        echo -e "${CYAN}   [CLEANUP]${NC} Removing leftover directory: ${leftover_dir}/"
+        sudo rm -rf "$leftover_dir/"
+    fi
+done
 echo -e "${GREEN}✅ Cleanup complete${NC}"
 
 echo ""
-echo -e "${BLUE}📥 Step 2.2: MITRE ATT&CK Navigator${NC}"
-show_progress "Cloning MITRE ATT&CK Navigator repository..."
-if git clone https://github.com/mitre-attack/attack-navigator.git 2>&1 | while read line; do echo -e "${CYAN}   [GIT]${NC} $line"; done; then
-    echo -e "${GREEN}✅ MITRE ATT&CK Navigator cloned${NC}"
-else
-    echo -e "${YELLOW}⚠️  Clone failed - continuing anyway${NC}"
-fi
-
-echo ""
-echo -e "${BLUE}🔧 Step 2.3: Environment Configuration${NC}"
+echo -e "${BLUE}🔧 Step 2.2: Environment Configuration${NC}"
 
 # Get host IP
 HOST_IP=$(hostname -I | awk '{print $1}')
@@ -552,7 +562,7 @@ echo -e "${CYAN}   [DIR]${NC} Created /opt/yeti/bloomfilters"
 echo -e "${GREEN}✅ Environment configured${NC}"
 
 echo ""
-echo -e "${BLUE}🔍 Step 2.4: Network Interface Detection${NC}"
+echo -e "${BLUE}🔍 Step 2.3: Network Interface Detection${NC}"
 
 # Detect interface
 SURICATA_IFACE=$(ip route | grep default | awk '{print $5}' | head -1)
@@ -579,7 +589,7 @@ fi
 echo -e "${CYAN}   [ENV]${NC} SURICATA_INT=$SURICATA_IFACE"
 
 echo ""
-echo -e "${BLUE}📦 Step 2.5: Suricata Rules${NC}"
+echo -e "${BLUE}📦 Step 2.4: Suricata Rules${NC}"
 sudo mkdir -p ./suricata/rules
 
 if [ ! -f ./suricata/emerging.rules.tar.gz ]; then
@@ -603,18 +613,7 @@ echo -e "${CYAN}   [DOWNLOAD]${NC} Downloading reference.config..."
 sudo curl -s -o ./suricata/reference.config https://raw.githubusercontent.com/OISF/suricata/master/etc/reference.config || true
 
 echo ""
-echo -e "${BLUE}🧠 Step 2.6: Caldera Setup${NC}"
-if [[ ! -d "./caldera" ]]; then
-    if [[ -f "./install_caldera.sh" ]]; then
-        show_progress "Installing Caldera..."
-        chmod +x ./install_caldera.sh
-        timeout 180 ./install_caldera.sh 2>&1 | while read line; do echo -e "${CYAN}   [CALDERA]${NC} $line"; done || echo "   Caldera setup completed"
-    fi
-fi
-echo -e "${GREEN}✅ Caldera verified${NC}"
-
-echo ""
-echo -e "${BLUE}🔑 Step 2.7: Wazuh SSL Certificates${NC}"
+echo -e "${BLUE}🔑 Step 2.5: Wazuh SSL Certificates${NC}"
 show_progress "Generating SSL certificates (30-60 seconds)..."
 sudo docker compose run --rm generator 2>&1 | while read line; do echo -e "${CYAN}   [SSL]${NC} $line"; done || echo "   Certificates generated"
 sleep 10
@@ -631,7 +630,7 @@ fi
 echo -e "${GREEN}✅ SSL certificates configured${NC}"
 
 echo ""
-echo -e "${BLUE}🔧 Step 2.8: Docker Networking Preparation${NC}"
+echo -e "${BLUE}🔧 Step 2.6: Docker Networking Preparation${NC}"
 echo -e "${CYAN}   [NETWORK]${NC} Pruning old Docker networks..."
 sudo docker network prune -f 2>&1 | while read line; do echo -e "${CYAN}   [PRUNE]${NC} $line"; done || true
 
@@ -651,7 +650,7 @@ timeout 30 bash -c 'until docker info >/dev/null 2>&1; do sleep 2; done' || true
 echo -e "${GREEN}✅ Docker networking prepared${NC}"
 
 echo ""
-echo -e "${BLUE}📥 Step 2.9: Downloading Agent Binaries & Packages${NC}"
+echo -e "${BLUE}📥 Step 2.7: Downloading Agent Binaries & Packages${NC}"
 echo -e "${CYAN}   [AGENTS]${NC} Downloading Velociraptor and Wazuh agents for deployment..."
 echo -e "${CYAN}   [INFO]${NC} This enables users to deploy agents from the portal"
 
@@ -679,24 +678,12 @@ else
     echo -e "${YELLOW}   ⚠️  Wazuh download script not found${NC}"
 fi
 
-# Fleet
-if [ -f "fleet/agents/download-packages.sh" ]; then
-    echo -e "${CYAN}   [FLEET]${NC} Downloading osquery packages..."
-    if bash fleet/agents/download-packages.sh 2>&1 | while read line; do echo -e "${CYAN}   [FLEET]${NC} $line"; done; then
-        echo -e "${GREEN}   ✅ Fleet osquery packages downloaded${NC}"
-    else
-        echo -e "${YELLOW}   ⚠️  Fleet download failed${NC}"
-    fi
-else
-    echo -e "${YELLOW}   ⚠️  Fleet download script not found${NC}"
-fi
-
 echo -e "${GREEN}✅ Agent deployment system ready${NC}"
 
 echo ""
-echo -e "${BLUE}🚀 Step 2.10: Container Deployment${NC}"
+echo -e "${BLUE}🚀 Step 2.8: Container Deployment${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════${NC}"
-echo -e "${MAGENTA}   📦 Building and starting 30+ containers...${NC}"
+echo -e "${MAGENTA}   📦 Building and starting containers...${NC}"
 echo -e "${MAGENTA}   ⏳ This is the longest step (5-10 minutes)${NC}"
 echo -e "${MAGENTA}   🎬 Watch the magic happen below:${NC}"
 echo -e "${MAGENTA}════════════════════════════════════════════════════════${NC}"
@@ -709,7 +696,7 @@ else
 fi
 
 echo ""
-echo -e "${BLUE}🔄 Step 2.11: Post-Deployment Stabilization${NC}"
+echo -e "${BLUE}🔄 Step 2.9: Post-Deployment Stabilization${NC}"
 echo -e "${CYAN}   [SERVICE]${NC} Restarting Docker for stability..."
 sudo systemctl restart docker
 sleep 10
@@ -726,66 +713,13 @@ done
 echo ""
 echo ""
 
-echo -e "${BLUE}🔧 Step 2.12: Fleet Database Configuration${NC}"
-show_progress "Configuring Fleet database (2-3 minutes)..."
 echo ""
-timeout 600 sudo docker run --rm \
-  --network=cyber-blue \
-  -e FLEET_MYSQL_ADDRESS=fleet-mysql:3306 \
-  -e FLEET_MYSQL_USERNAME=fleet \
-  -e FLEET_MYSQL_PASSWORD=fleetpass \
-  -e FLEET_MYSQL_DATABASE=fleet \
-  fleetdm/fleet:latest fleet prepare db 2>&1 | while read line; do echo -e "${CYAN}   [FLEET]${NC} $line"; done || true
+echo -e "${BLUE}🔍 Step 2.10: Arkime Setup (SKIPPED — Arkime is disabled)${NC}"
+echo -e "${CYAN}   [ARKIME]${NC} Arkime is commented out in docker-compose.yml — skipping initialization"
+echo -e "${YELLOW}   [INFO]${NC} To re-enable Arkime, uncomment the os01 + arkime services in docker-compose.yml"
 
 echo ""
-echo -e "${CYAN}   [FLEET]${NC} Starting Fleet server..."
-sudo docker compose up -d fleet-server 2>&1 | while read line; do echo -e "${CYAN}   [FLEET]${NC} $line"; done
-sleep 30
-echo -e "${GREEN}✅ Fleet configured${NC}"
-
-echo ""
-echo -e "${BLUE}🔐 Step 2.12a: Fleet Enrollment Secret Configuration${NC}"
-if [ -f "fleet/configure-fleet-secret.sh" ]; then
-    echo -e "${CYAN}   [FLEET]${NC} Generating and configuring enrollment secret..."
-    if bash fleet/configure-fleet-secret.sh 2>&1 | while read line; do echo -e "${CYAN}   [FLEET]${NC} $line"; done; then
-        echo -e "${GREEN}✅ Fleet enrollment secret configured${NC}"
-        FLEET_SECRET=$(cat fleet/agents/.enrollment-secret 2>/dev/null || echo "unknown")
-        echo -e "${CYAN}   [INFO]${NC} Enrollment secret: $FLEET_SECRET"
-        echo -e "${CYAN}   [INFO]${NC} Portal will automatically use this for agent deployment"
-        echo -e "${YELLOW}   [ACTION REQUIRED]${NC} Set this secret in Fleet UI after first login!"
-    else
-        echo -e "${YELLOW}⚠️  Fleet secret configuration had warnings (non-critical)${NC}"
-    fi
-else
-    echo -e "${YELLOW}⚠️  Fleet secret configuration script not found${NC}"
-fi
-
-echo ""
-echo -e "${BLUE}🔍 Step 2.13: Arkime Setup${NC}"
-if [ -f "./fix-arkime.sh" ]; then
-    chmod +x ./fix-arkime.sh
-    show_progress "Initializing Arkime with live capture (may take up to 3 minutes)..."
-    echo -e "${CYAN}   [ARKIME]${NC} Starting capture initialization..."
-    
-    # Run Arkime setup with aggressive timeout and cleanup
-    (
-        timeout --kill-after=5s 180s bash -c './fix-arkime.sh --live-30s 2>&1 | while IFS= read -r line; do echo "[ARKIME] $line"; done'
-    ) || true
-    
-    # Force cleanup of any stuck processes
-    pkill -9 -f "fix-arkime" 2>/dev/null || true
-    pkill -9 -f "arkime" 2>/dev/null || true
-    sleep 2
-    
-    echo -e "${CYAN}   [ARKIME]${NC} Capture initialization completed"
-fi
-
-echo -e "${CYAN}   [ARKIME]${NC} Creating admin user..."
-(timeout --kill-after=3s 30s sudo docker exec arkime /opt/arkime/bin/arkime_add_user.sh admin "CyberBlue Admin" admin --admin 2>&1 || true) | while IFS= read -r line; do echo -e "${CYAN}   [USER]${NC} $line"; done || true
-echo -e "${GREEN}✅ Arkime initialized${NC}"
-
-echo ""
-echo -e "${BLUE}🌐 Step 2.14: External Access Configuration${NC}"
+echo -e "${BLUE}🌐 Step 2.11: External Access Configuration${NC}"
 
 # Detect Docker bridges
 DOCKER_BRIDGES=$(ip link show | grep -E 'br-[a-f0-9]+|docker0' | awk -F': ' '{print $2}' | cut -d'@' -f1)
@@ -799,11 +733,11 @@ if [ -n "$DOCKER_BRIDGES" ]; then
     sudo iptables -I FORWARD -i br-+ -o "$SURICATA_IFACE" -j ACCEPT 2>&1 | head -3 || true
     
     echo -e "${CYAN}   [IPTABLES]${NC} Adding port forwarding rules for SOC tools..."
-    for port in 443 5443 7001 7002 7003 7004 7005 7006 7007 7008 7009; do
+    for port in 443 5443 7000 7001 7003 7005 7006 7008 7015 9443; do
         sudo iptables -I FORWARD -i "$SURICATA_IFACE" -p tcp --dport $port -j ACCEPT 2>/dev/null || true
         sudo iptables -I FORWARD -o "$SURICATA_IFACE" -p tcp --sport $port -j ACCEPT 2>/dev/null || true
     done
-    echo -e "${CYAN}   [IPTABLES]${NC} Port rules configured for ports: 443, 5443, 7001-7009"
+    echo -e "${CYAN}   [IPTABLES]${NC} Port rules configured for: 443, 5443, 7000, 7001, 7003, 7005, 7006, 7008, 7015, 9443"
     
     # Make rules persistent
     if ! dpkg -l | grep -q iptables-persistent; then
@@ -828,7 +762,7 @@ fi
 echo -e "${GREEN}✅ External access configured${NC}"
 
 echo ""
-echo -e "${BLUE}🔍 Step 2.15: Wazuh Services Verification${NC}"
+echo -e "${BLUE}🔍 Step 2.12: Wazuh Services Verification${NC}"
 WAZUH_RUNNING=$(sudo docker ps | grep -c "wazuh.*Up" || echo "0")
 echo -e "${CYAN}   [CHECK]${NC} Wazuh services running: $WAZUH_RUNNING/3"
 
@@ -844,43 +778,10 @@ fi
 echo -e "${GREEN}✅ Wazuh services verified${NC}"
 
 echo ""
-echo -e "${BLUE}🧠 Step 2.16: Caldera Auto-Start Service${NC}"
-echo -e "${CYAN}   [SYSTEMD]${NC} Creating caldera-autostart.service..."
-sudo tee /etc/systemd/system/caldera-autostart.service > /dev/null << 'EOF'
-[Unit]
-Description=Caldera Adversary Emulation Platform Auto-Start
-Requires=docker.service
-After=docker.service network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=/home/ubuntu/CyberBlueSOCx
-ExecStartPre=/bin/bash -c 'timeout 30 bash -c "until docker info >/dev/null 2>&1; do sleep 2; done"'
-ExecStart=/bin/bash -c 'if docker ps -a --format "{{.Names}}" | grep -q "^caldera$"; then docker start caldera; else echo "Caldera container not found"; fi'
-ExecStop=/usr/bin/docker stop caldera
-TimeoutStartSec=120
-TimeoutStopSec=30
-User=ubuntu
-Group=ubuntu
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo -e "${CYAN}   [SYSTEMD]${NC} Reloading systemd daemon..."
-sudo systemctl daemon-reload
-echo -e "${CYAN}   [SYSTEMD]${NC} Enabling caldera-autostart.service..."
-sudo systemctl enable caldera-autostart.service 2>&1 | head -3 | while read line; do echo -e "${CYAN}   [SYSTEMD]${NC} $line"; done
-echo -e "${GREEN}✅ Caldera auto-start configured${NC}"
-
-echo ""
-echo -e "${BLUE}🧠 Step 2.16a: MISP Password Change Bypass${NC}"
+echo -e "${BLUE}🧠 Step 2.13: MISP Password Change Bypass${NC}"
 echo -e "${CYAN}   [MISP]${NC} Waiting for MISP admin user creation..."
 
 # Keep checking until admin user exists, then immediately disable password change
-# Use sudo tee to write to /var/log (proper logging location)
 (
     for i in {1..60}; do
         USER_EXISTS=$(sudo docker exec misp-core mysql -h db -u misp -pexample misp -se "SELECT COUNT(*) FROM users WHERE email='admin@admin.test';" 2>/dev/null || echo "0")
@@ -898,10 +799,9 @@ echo -e "${CYAN}   [MISP]${NC} Waiting for MISP admin user creation..."
 sleep 30  # Give script time to start checking
 
 echo ""
-echo -e "${BLUE}🧠 Step 2.16b: MISP Threat Intelligence Feeds${NC}"
+echo -e "${BLUE}🧠 Step 2.14: MISP Threat Intelligence Feeds${NC}"
 echo -e "${CYAN}   [MISP]${NC} Configuring feeds in background..."
 
-# Just run the script directly - it handles everything!
 if [ -f "misp/configure-threat-feeds.sh" ]; then
     echo -e "${CYAN}   [MISP]${NC} Configuring threat feeds (this may take 2-3 minutes)..."
     
@@ -923,99 +823,8 @@ else
     echo -e "${YELLOW}⚠️  MISP feed script not found${NC}"
 fi
 
-# OLD COMPLEX METHOD - REMOVED
-if false; then
-cat > /tmp/misp-auto-setup.sh << 'MISP_SCRIPT'
-#!/bin/bash
-# Auto-configure MISP without requiring manual first login
-# Bypasses password change requirement and configures feeds automatically
-
-sleep 300  # Wait 5 minutes for MISP database to initialize
-
-# Find CyberBlue directory - read from .env file (most reliable!)
-SCRIPT_DIR=""
-
-# Method 1: Read from .env in known locations
-for base_dir in /home/*/CyberBlue /root/CyberBlue; do
-    if [ -f "$base_dir/.env" ]; then
-        FOUND_DIR=$(grep "^CYBERBLUE_INSTALL_DIR=" "$base_dir/.env" 2>/dev/null | cut -d'=' -f2)
-        if [ -n "$FOUND_DIR" ] && [ -d "$FOUND_DIR" ]; then
-            SCRIPT_DIR="$FOUND_DIR"
-            echo "[MISP AUTO-SETUP] Found install dir from .env: $SCRIPT_DIR"
-            break
-        fi
-    fi
-done
-
-# Method 2: Fallback to environment variable
-if [ -z "$SCRIPT_DIR" ]; then
-    SCRIPT_DIR="${CYBERBLUE_INSTALL_DIR}"
-fi
-
-# Method 3: Last resort - find it
-if [ -z "$SCRIPT_DIR" ]; then
-    for base_dir in /home/*/CyberBlue /root/CyberBlue; do
-        if [ -f "$base_dir/misp/configure-threat-feeds.sh" ]; then
-            SCRIPT_DIR="$base_dir"
-            break
-        fi
-    done
-fi
-
-if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR" ]; then
-    echo "[MISP AUTO-SETUP] ERROR: Could not find CyberBlue directory"
-    exit 1
-fi
-
-cd "$SCRIPT_DIR" || exit 1
-echo "[MISP AUTO-SETUP] Using directory: $SCRIPT_DIR"
-
-echo "[MISP AUTO-SETUP] Waiting for MISP database to be ready..."
-
-# Wait for admin user to be created by MISP initialization
-for i in {1..60}; do
-    USER_EXISTS=$(sudo docker exec misp-core mysql -h db -u misp -pexample misp -se "SELECT COUNT(*) FROM users WHERE email='admin@admin.test';" 2>/dev/null || echo "0")
-    
-    if [ "$USER_EXISTS" -gt "0" ]; then
-        echo "[MISP AUTO-SETUP] Admin user found!"
-        
-        # CRITICAL FIX: Mark password as already changed so API key works immediately
-        echo "[MISP AUTO-SETUP] Bypassing password change requirement..."
-        sudo docker exec misp-core mysql -h db -u misp -pexample misp -e "UPDATE users SET change_pw=0 WHERE email='admin@admin.test';" 2>/dev/null
-        
-        sleep 5
-        
-        # Now get API key
-        API_KEY=$(sudo docker exec misp-core mysql -h db -u misp -pexample misp -se "SELECT authkey FROM users WHERE email='admin@admin.test' LIMIT 1;" 2>/dev/null)
-        
-        if [ -n "$API_KEY" ] && [ "$API_KEY" != "NULL" ]; then
-            echo "[MISP AUTO-SETUP] API key activated: ${API_KEY:0:20}..."
-            
-            # Configure threat feeds
-            if [ -f "misp/configure-threat-feeds.sh" ]; then
-                echo "[MISP AUTO-SETUP] Configuring threat feeds..."
-                bash misp/configure-threat-feeds.sh >> /var/log/misp-feed-config.log 2>&1
-                echo "[MISP AUTO-SETUP] ✅ Feed configuration complete!"
-            fi
-            
-            # Set up daily cron
-            (crontab -l 2>/dev/null; echo "0 2 * * * cd $(pwd) && bash misp/update-feeds-daily.sh >> /var/log/misp-feeds-update.log 2>&1") | crontab - 2>/dev/null || true
-            
-            echo "[MISP AUTO-SETUP] ✅ All MISP automation complete!"
-            exit 0
-        fi
-    fi
-    
-    sleep 10
-done
-
-echo "[MISP AUTO-SETUP] Timeout - feeds not configured"
-MISP_SCRIPT
-fi
-# End of old method - above code is disabled
-
 echo ""
-echo -e "${BLUE}🔧 Step 2.17: CyberBlue Auto-Start on Reboot${NC}"
+echo -e "${BLUE}🔧 Step 2.15: CyberBlue Auto-Start on Reboot${NC}"
 show_progress "Configuring automatic service startup after reboot..."
 
 # Get the actual installation directory
@@ -1069,8 +878,8 @@ sleep 5
 
 echo -e "${CYAN}   [CHECK]${NC} Counting running containers..."
 TOTAL_RUNNING=$(sudo docker ps | grep -c "Up" || echo "0")
-EXPECTED_SERVICES=25
-OPTIMAL_SERVICES=30
+EXPECTED_SERVICES=8
+OPTIMAL_SERVICES=10
 
 echo -e "${CYAN}   [CHECK]${NC} Running containers: $TOTAL_RUNNING"
 echo -e "${CYAN}   [CHECK]${NC} Expected minimum: $EXPECTED_SERVICES"
@@ -1102,12 +911,14 @@ echo -e "${GREEN}║    🎉 INSTALLATION COMPLETE - CYBERBLUE SOC READY! 🎉  
 echo -e "${GREEN}║                                                            ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${CYAN}    ____      _               ____  _            ${NC}"
-echo -e "${CYAN}   / ___|   _| |__   ___ _ __| __ )| |_   _  ___ ${NC}"
-echo -e "${CYAN}  | |  | | | | '_ \\ / _ \\ '__|  _ \\| | | | |/ _ \\${NC}"
-echo -e "${CYAN}  | |__| |_| | |_) |  __/ |  | |_) | | |_| |  __/${NC}"
-echo -e "${CYAN}   \\____\\__, |_.__/ \\___|_|  |____/|_|\\__,_|\\___|${NC}"
-echo -e "${CYAN}        |___/                                    ${NC}"
+echo -e "${CYAN}  /\$\$\$\$\$\$                        /\$\$                 /\$\$\$\$\$\$  /\$\$                   ${NC}"
+echo -e "${CYAN} /\$\$__  \$\$                      | \$\$                /\$\$__  \$\$| \$\$                   ${NC}"
+echo -e "${CYAN}| \$\$  \__/ /\$\$   /\$\$  /\$\$\$\$\$\$\$  /\$\$\$\$\$\$\$   /\$\$\$\$\$\$\$| \$\$  \__/| \$\$  /\$\$   /\$\$ /\$\$${NC}"
+echo -e "${CYAN}| \$\$      | \$\$  | \$\$ /\$\$_____/ | \$\$__  \$\$ /\$\$_____/| \$\$      | \$\$ | \$\$  | \$\$| \$\$${NC}"
+echo -e "${CYAN}| \$\$      | \$\$  | \$\$|  \$\$\$\$\$\$  | \$\$  \ \$\$|  \$\$\$\$\$\$ | \$\$      | \$\$ | \$\$  | \$\$| \$\$${NC}"
+echo -e "${CYAN}| \$\$    \$\$| \$\$  | \$\$ \____  \$\$ | \$\$  | \$\$ \____  \$\$| \$\$    \$\$| \$\$ | \$\$  | \$\$| \$\$${NC}"
+echo -e "${CYAN}|  \$\$\$\$\$\$/|  \$\$\$\$\$\$/ /\$\$\$\$\$\$\$/| \$\$  | \$\$ /\$\$\$\$\$\$\$/|  \$\$\$\$\$\$/| \$\$ |  \$\$\$\$\$\$\$/| \$\$${NC}"
+echo -e "${CYAN} \______/  \______/ |_______/ |__/  |__/|_______/  \______/ |__/  \______/ |__/${NC}"
 echo ""
 echo -e "${STATUS_ICON} ${GREEN}Deployment Status: ${FINAL_STATUS}${NC}"
 echo ""
@@ -1126,19 +937,16 @@ echo "   🔁 Auto-Start: ✅ Enabled (starts on reboot)"
 echo ""
 echo -e "${BLUE}🌐 Access Your CyberBlue SOC Tools:${NC}"
 echo ""
-echo -e "${GREEN}   🏠 Main Portal:    https://${HOST_IP}:5443${NC}"
-echo "      └─ Credentials: admin / cyberblue123"
+echo -e "${GREEN}   🏠 Main Portal:       https://${HOST_IP}:5443${NC}"
 echo ""
-echo "   🔒 MISP:           https://${HOST_IP}:7003"
-echo "   🛡️  Wazuh:          http://${HOST_IP}:7001"
-echo "   🔍 EveBox:         http://${HOST_IP}:7015"
-echo "   🧠 Caldera:        http://${HOST_IP}:7009"
-echo "   📊 Arkime:         http://${HOST_IP}:7008"
-echo "   🕷️  TheHive:        http://${HOST_IP}:7005"
-echo "   🔧 Fleet:          http://${HOST_IP}:7007"
-echo "   🧪 CyberChef:      http://${HOST_IP}:7004"
-echo "   🔗 Shuffle:        http://${HOST_IP}:7002"
-echo "   🖥️  Portainer:      http://${HOST_IP}:9443"
+echo "   🔍 Velociraptor:     https://${HOST_IP}:7000"
+echo "   🛡️  Wazuh Dashboard:  https://${HOST_IP}:7001"
+echo "   🔒 MISP:             https://${HOST_IP}:7003"
+echo "   🕷️  TheHive:          http://${HOST_IP}:7005"
+echo "   🔧 Cortex:           http://${HOST_IP}:7006"
+echo "   📊 Arkime:           http://${HOST_IP}:7008"
+echo "   👁️  EveBox:           https://${HOST_IP}:7015"
+echo "   🖥️  Portainer:        https://${HOST_IP}:9443"
 echo ""
 echo -e "${YELLOW}🔑 Default Credentials (for tools): admin / cyberblue${NC}"
 echo ""

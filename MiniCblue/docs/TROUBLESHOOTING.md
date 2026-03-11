@@ -178,6 +178,13 @@ sudo ufw status
 **Symptoms:**
 - 502 Bad Gateway error
 - Dashboard container healthy but interface not accessible
+- Connection refused or timeout when accessing Wazuh
+
+**Important:** The Wazuh dashboard has SSL/TLS enabled. You **must** use `https://` (not `http://`) to access it:
+```
+https://YOUR_SERVER_IP:7001
+```
+Credentials: `admin` / `SecretPassword`
 
 **Diagnosis:**
 ```bash
@@ -189,6 +196,9 @@ curl -k https://localhost:9200/_cluster/health
 
 # Check manager API
 curl -k https://localhost:55000/
+
+# Check dashboard accessibility (note: HTTPS required)
+curl -k https://localhost:7001/
 ```
 
 **Solutions:**
