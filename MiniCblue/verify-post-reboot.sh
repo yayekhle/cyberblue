@@ -61,7 +61,7 @@ fi
 echo ""
 echo "🎯 Checking ALL CyberBlue SOC Services..."
 all_services=(
-    "cortex" "cyber-blue-portal"
+    "arkime" "os01" "caldera" "cortex" "cyber-blue-portal"
     "elasticsearch" "evebox"
     "misp-core" "misp-db" "misp-mail" "misp-modules" "misp-redis"
     "portainer" "suricata"
@@ -112,7 +112,7 @@ SERVER_IP=$(ip -4 addr show "$PRIMARY_INTERFACE" | grep -oP '(?<=inet\s)\d+(\.\d
 print_info "Testing on server IP: $SERVER_IP"
 
 # Test ALL external ports
-test_ports=(5443 5500 7000 7001 7003 7005 7006 7015 9200 9210 9443)
+test_ports=(5443 5500 7000 7001 7003 7005 7006 7008 7009 7015 9200 9210 9443)
 accessible_count=0
 
 echo "   Testing all external ports..."
@@ -136,7 +136,9 @@ echo "   🔒 MISP:            https://$SERVER_IP:7003 (admin@admin.test / admin
 echo "   🛡️  Wazuh:           https://$SERVER_IP:7001 (admin / SecretPassword)"
 echo "   🕷️  TheHive:         http://$SERVER_IP:7005 (admin@thehive.local / secret)"
 echo "   🧬 Cortex:          http://$SERVER_IP:7006 (setup required)"
+echo "   📡 Arkime:          http://$SERVER_IP:7008 (admin / admin)"
 echo "   🔍 EveBox:          http://$SERVER_IP:7015 (no auth)"
+echo "   ♟️  Caldera:         http://$SERVER_IP:7009 (admin / cyberblue)"
 echo "   🦕 Velociraptor:    https://$SERVER_IP:7000 (admin / cyberblue)"
 echo "   🖥️  Portainer:       https://$SERVER_IP:9443 (setup required)"
 echo ""

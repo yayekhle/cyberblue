@@ -1872,7 +1872,14 @@
         try {
             const response = await fetch('/api/server-info');
             const data = await response.json();
-            serverIP = data.server_ip || window.location.hostname;
+            const ip = data.server_ip;
+            // If the server reports a loopback/unset address, use the browser's
+            // own hostname so that tool links work from any remote client.
+            if (ip && ip !== '127.0.0.1' && ip !== 'localhost' && ip !== '::1') {
+                serverIP = ip;
+            } else {
+                serverIP = window.location.hostname;
+            }
         } catch (e) {
             serverIP = window.location.hostname;
         }

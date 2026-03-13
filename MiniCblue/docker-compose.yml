@@ -5,7 +5,6 @@
 #   - Shuffle       (SOAR - shelfware for small teams, TheHive+Cortex covers it)
 #   - FleetDM       (Endpoint - overlaps with Velociraptor, 3 containers for one tool)
 #   - MITRE Nav     (Reference tool only - use the online version)
-#   - Caldera       (Red team - not a blue team daily driver)
 #   - CyberChef     (Static app - use gchq.github.io/CyberChef instead)
 #   - Wireshark     (Redundant - Arkime does full PCAP better, also ran privileged)
 #
@@ -20,6 +19,7 @@
 #   - Suricata      (IDS - network intrusion detection)
 #   - EveBox        (Suricata alert viewer)
 #   - Arkime        (Full PCAP capture + session search)
+#   - Caldera       (Adversary emulation - red/blue team training)
 # =============================================================================
 
 services:
@@ -27,7 +27,7 @@ services:
   # ---------------------------------------------------------------------------
   # PORTAL — CyberBlue web dashboard (the card grid UI)
   # Mounts docker.sock to read live container status
-  # Removed: ./fleet/agents and ./caldera/agents volume mounts (those tools gone)
+  # Removed: ./fleet/agents volume mount (FleetDM gone)
   # ---------------------------------------------------------------------------
   portal:
     build:
@@ -244,6 +244,7 @@ services:
     environment:
       - VEL_USER=${VEL_USER}
       - VEL_PASSWORD=${VEL_PASSWORD}
+      - HOST_IP=${HOST_IP:-127.0.0.1}
     networks:
       - cyber-blue
 
@@ -359,11 +360,13 @@ services:
       misp-modules:
         condition: service_healthy
     healthcheck:
-      test: curl -ks ${MISP_BASE_URL:-https://localhost}/users/heartbeat > /dev/null || exit 1
-      interval: 2s
-      timeout: 1s
-      retries: 3
-      start_period: 30s
+      # Use port 443 (nginx internal) not 7003 (host-mapped) — host ports are not
+      # reachable inside the container itself.
+      test: curl -ks https://localhost/users/heartbeat > /dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
     ports:
       - "7003:443"    # MISP Web UI (HTTPS)
     volumes:
@@ -373,7 +376,7 @@ services:
       - "./misp/ssl/:/etc/nginx/certs/"
       - "./misp/gnupg/:/var/www/MISP/.gnupg/"
     environment:
-      - "BASE_URL=${MISP_BASE_URL}"
+      - "BASE_URL=https://${HOST_IP:-127.0.0.1}:7003"
       - "CRON_USER_ID=${CRON_USER_ID}"
       - "CRON_PULLALL=${CRON_PULLALL}"
       - "CRON_PUSHALL=${CRON_PUSHALL}"
@@ -565,6 +568,7 @@ services:
     environment:
       - OS_HOST=os01
       - OS_PORT=9200
+      - ARKIME_HOSTNAME=0.0.0.0
     ports:
       - "${ARKIME_PORT:-8005}:8005"  # Native Arkime port (configurable via .env)
       - "7008:8005"                   # CyberBlue portal standardized port
@@ -627,9 +631,26 @@ services:
     networks:
       - cyber-blue
 
+  # ===========================================================================
+  # CALDERA — MITRE Adversary Emulation Platform
+  # Red/Blue team training: build and execute adversary TTPs
+  # GUI on port 7009. Credentials in local.yml (admin/cyberblue)
+  # ===========================================================================
+  caldera:
+    image: mitre/caldera:latest
+    container_name: caldera
+    ports:
+      - "7009:8888"   # Web GUI
+    volumes:
+      - ./caldera/conf/local.yml:/usr/src/app/conf/local.yml:ro
+      - caldera_data:/usr/src/app/data
+    restart: unless-stopped
+    networks:
+      - cyber-blue
+
 # =============================================================================
 # VOLUMES
-# Removed: fleet-mysql-data, fleet-server-data, os01_data, yeti-exports, yeti-db
+# Removed: fleet-mysql-data, fleet-server-data, yeti-exports, yeti-db
 # (FleetDM and Yeti containers were removed)
 # =============================================================================
 volumes:
@@ -656,6 +677,8 @@ volumes:
   os01_data:
   # Portainer
   portainer_data:
+  # Caldera
+  caldera_data:
 
 # =============================================================================
 # NETWORKS

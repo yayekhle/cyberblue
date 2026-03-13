@@ -84,22 +84,19 @@ CyberBlue transforms Blue Team cybersecurity tool deployment into a **like one-c
 ### 🕵️ **DFIR & Forensics**
 - **[Velociraptor](https://docs.velociraptor.app/)** - Endpoint visibility and digital forensics
 - **[Arkime](https://arkime.com/)** - Full packet capture and network analysis
-- **[Wireshark](https://www.wireshark.org/)** - Network protocol analyzer
 
 ### 🧠 **Threat Intelligence**
 - **[MISP](https://www.misp-project.org/)** - Threat intelligence platform
-- **[MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/)** - Threat modeling and visualization
 
 ### ⚡ **SOAR & Automation**
-- **[Shuffle](https://shuffler.io/)** - Security orchestration and automation
 - **[TheHive](https://thehive-project.org/)** - Incident response platform
 - **[Cortex](https://github.com/TheHive-Project/Cortex)** - Observable analysis engine
 
+### 🎯 **Adversary Emulation**
+- **[Caldera](https://caldera.mitre.org/)** - MITRE adversary emulation for red/blue team exercises
+
 ### 🔧 **Utilities & Management**
-- **[CyberChef](https://gchq.github.io/CyberChef/)** - Cyber Swiss Army knife
 - **[Portainer](https://www.portainer.io/)** - Container management interface
-- **[FleetDM](https://fleetdm.com/)** - Device management and osquery fleet manager
-- **[Caldera](https://caldera.mitre.org/)** - Adversary emulation platform
 
 ### 🔍 **Threat Hunting & Detection**
 - **[YARA](https://virustotal.github.io/yara/)** - Pattern matching for malware detection and classification
@@ -126,9 +123,7 @@ CyberBlue transforms Blue Team cybersecurity tool deployment into a **like one-c
 ### **🔵 Agent Deployment (Agents Tab)**
 - **Velociraptor** - DFIR agent deployment (Windows, Linux, macOS)
 - **Wazuh** - HIDS agent deployment (Windows, Linux)
-- **Caldera** - Red team/adversary emulation deployment
 - **Arkime PCAP** - One-click network traffic capture
-- **Shuffle** - SOAR integration guide for 12 tools
 
 **Zero-configuration packages** with auto-extracted certificates and secrets!
 
@@ -199,7 +194,7 @@ The installation automatically:
 - ✅ Initializes threat intelligence with MISP
 - ✅ Configures SIEM with Wazuh and EveBox
 - ✅ Sets up incident response with TheHive and Cortex
-- ✅ Deploys automation platform with Shuffle
+- ✅ Deploys Caldera for adversary emulation and red/blue team training
 - ✅ Creates SSL certificates and security credentials
 - ✅ Optimizes system for container workloads
 
@@ -213,21 +208,16 @@ https://YOUR_SERVER_IP:5443
 No authentication required - direct access
 ```
 
-**🛡️ Individual Tools (ports 7000-7099):**
+**🛡️ Individual Tools:**
 - **Velociraptor**: https://YOUR_SERVER_IP:7000 (admin/cyberblue)
 - **Wazuh**: https://YOUR_SERVER_IP:7001 (admin/SecretPassword)
-- **Shuffle**: https://YOUR_SERVER_IP:7002 (admin/password)
 - **MISP**: https://YOUR_SERVER_IP:7003 (admin@admin.test/admin)
-- **CyberChef**: http://YOUR_SERVER_IP:7004 (no auth)
 - **TheHive**: http://YOUR_SERVER_IP:7005 (admin@thehive.local/secret)
-- **Cortex**: http://YOUR_SERVER_IP:7006 (admin/cyberblue123)
-- **FleetDM**: http://YOUR_SERVER_IP:7007 (setup required)
+- **Cortex**: http://YOUR_SERVER_IP:7006 (setup required)
 - **Arkime**: http://YOUR_SERVER_IP:7008 (admin/admin)
-- **Caldera**: http://YOUR_SERVER_IP:7009 (red:cyberblue, blue:cyberblue)
+- **Caldera**: http://YOUR_SERVER_IP:7009 (admin/cyberblue)
 - **EveBox**: http://YOUR_SERVER_IP:7015 (no auth)
-- **Wireshark**: http://YOUR_SERVER_IP:7011 (admin/cyberblue)
-- **MITRE Navigator**: http://YOUR_SERVER_IP:7013 (no auth)
-- **Portainer**: https://YOUR_SERVER_IP:9443 (admin/cyberblue123)
+- **Portainer**: https://YOUR_SERVER_IP:9443 (setup required)
 
 ---
 
@@ -285,18 +275,22 @@ CyberBlue uses a microservices architecture with Docker Compose:
 │     Portal      │    │                 │    │                 │
 │   (Flask App)   │    │ • Wazuh         │    │ • Velociraptor  │
 │                 │    │ • Suricata      │    │ • Arkime        │
-│                 │    │ • EveBox        │    │ • Wireshark     │
+│                 │    │ • EveBox        │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
                                  │
          ┌─────────────────┐    ┌┴─────────────────┐    ┌─────────────────┐
          │   CTI Stack     │    │ Docker Network   │    │  SOAR Stack     │
-         │                 │    │  (172.18.0.0/16) │    │                 │
-         │ • MISP          │    │                  │    │ • Shuffle       │
-         │ • MITRE ATT&CK  │    │                  │    │ • TheHive       │
+         │                 │    │  (cyber-blue)    │    │                 │
+         │ • MISP          │    │                  │    │ • TheHive       │
          │                 │    │                  │    │ • Cortex        │
          └─────────────────┘    └──────────────────┘    └─────────────────┘
+                                         │
+                          ┌──────────────────────────┐
+                          │   Attack Simulation      │
+                          │   • Caldera (port 7009)  │
+                          └──────────────────────────┘
 ```
 
 ---
@@ -321,7 +315,7 @@ CyberBlue uses a microservices architecture with Docker Compose:
 # Complete system restart (recommended)
 ./force-start.sh
 
-# Check all containers (should show 30+ running)
+# Check all containers (should show ~20 running)
 sudo docker ps
 
 # View portal logs
@@ -335,15 +329,6 @@ curl -k https://localhost:5443/health
 
 # Restart portal
 sudo docker-compose restart portal
-```
-
-**Fleet database issues:**
-```bash
-# Fix Fleet database
-./fix-fleet.sh
-
-# Check Fleet status
-sudo docker logs fleet-server
 ```
 
 **Individual tool issues:**
@@ -363,7 +348,6 @@ sudo docker stats
 - **`./setup-prerequisites.sh`** - Install all system prerequisites
 - **`./cyberblue_install.sh`** - Main CyberBlue installation script  
 - **`./force-start.sh`** - Emergency restart for all services
-- **`./fix-fleet.sh`** - Fix Fleet database issues
 
 ---
 
@@ -621,15 +605,10 @@ This project stands on the shoulders of giants. We are deeply grateful to the en
 - **[Velociraptor](https://www.velocidex.com/)** - For the powerful DFIR platform
 - **[Arkime Project](https://arkime.com/)** - For full packet capture and analysis
 - **[MISP Project](https://www.misp-project.org/)** - For threat intelligence sharing
-- **[Shuffle](https://shuffler.io/)** - For security automation and orchestration
 - **[Suricata](https://suricata.io/)** - For network intrusion detection
 - **[EveBox](https://evebox.org/)** - For Suricata event management
-- **[FleetDM](https://fleetdm.com/)** - For osquery fleet management
-- **[Caldera](https://caldera.mitre.org/)** - For adversary emulation
-- **[CyberChef](https://gchq.github.io/CyberChef/)** - For the Swiss Army knife of cyber operations
 - **[Portainer](https://www.portainer.io/)** - For container management
-- **[GCHQ](https://www.gchq.gov.uk/)** - For CyberChef and inspiring security innovation
-- **[MITRE Corporation](https://attack.mitre.org/)** - For the ATT&CK framework that revolutionized threat intelligence
+- **[MITRE Corporation](https://attack.mitre.org/)** - For the ATT&CK framework and Caldera adversary emulation platform
 - **[Elastic](https://www.elastic.co/)** - For Elasticsearch and the ELK stack foundation
 
 ### **👨‍💻 Individual Contributors:**

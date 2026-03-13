@@ -2,6 +2,15 @@
 # Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
 
 ##############################################################################
+# Skip cert generation if certificates already exist (idempotent re-runs)
+##############################################################################
+
+if find /certificates -name '*.pem' -type f 2>/dev/null | grep -q .; then
+  echo "Certificates already exist in /certificates/ — skipping generation."
+  exit 0
+fi
+
+##############################################################################
 # Downloading Cert Gen Tool
 ##############################################################################
 

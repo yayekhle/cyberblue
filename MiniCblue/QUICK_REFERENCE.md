@@ -21,18 +21,13 @@
 | **CyberBlue Portal** | `https://YOUR_IP:5443` | admin/cyberblue123 | ✅ HTTPS Auth | Central Management |
 | **Velociraptor** | `https://YOUR_IP:7000` | admin/cyberblue | ✅ HTTPS | Endpoint Forensics |
 | **Wazuh** | `https://YOUR_IP:7001` | admin/SecretPassword | ✅ HTTPS | SIEM Dashboard |
-| **Shuffle** | `https://YOUR_IP:7002` | admin/password | ✅ HTTPS | Security Automation |
 | **MISP** | `https://YOUR_IP:7003` | admin@admin.test/admin | ✅ HTTPS | Threat Intelligence |
-| **CyberChef** | `http://YOUR_IP:7004` | No Auth | ✅ HTTP | Data Analysis |
 | **TheHive** | `http://YOUR_IP:7005` | admin@thehive.local/secret | ✅ HTTP | Case Management |
-| **Cortex** | `http://YOUR_IP:7006` | admin/cyberblue123 | ✅ HTTP | Observable Analysis |
-| **FleetDM** | `http://YOUR_IP:7007` | Setup Required | ✅ HTTP | Endpoint Management |
-| **Arkime** | `http://YOUR_IP:7008` | admin/admin | ✅ HTTP + Data | Network Analysis |
-| **Caldera** | `http://YOUR_IP:7009` | red:cyberblue, blue:cyberblue | ✅ HTTP | Adversary Emulation |
-| **EveBox** | `http://YOUR_IP:7015` | No Auth | ✅ HTTP + Events | Suricata Events |
-| **Wireshark** | `http://YOUR_IP:7011` | admin/cyberblue | ⚠️ GUI | Protocol Analysis |
-| **MITRE Navigator** | `http://YOUR_IP:7013` | No Auth | ✅ HTTP | ATT&CK Visualization |
-| **Portainer** | `https://YOUR_IP:9443` | admin/cyberblue123 | ✅ HTTPS | Container Management |
+| **Cortex** | `http://YOUR_IP:7006` | setup required | ✅ HTTP | Observable Analysis |
+| **Arkime** | `http://YOUR_IP:7008` | admin/admin | ✅ HTTP | Full Packet Capture |
+| **Caldera** | `http://YOUR_IP:7009` | admin/cyberblue | ✅ HTTP | Adversary Emulation |
+| **EveBox** | `http://YOUR_IP:7015` | No Auth | ✅ HTTP | Suricata Events |
+| **Portainer** | `https://YOUR_IP:9443` | setup required | ✅ HTTPS | Container Management |
 
 ---
 
@@ -188,11 +183,12 @@ sudo docker-compose up -d portal
 # Arkime issues
 ./scripts/initialize-arkime.sh --force --capture-live
 
+# Caldera issues
+sudo docker-compose restart caldera
+sudo docker logs caldera --tail 50
+
 # Suricata issues
 ./update-network-interface.sh --restart-suricata
-
-# Caldera issues
-./install_caldera.sh
 ```
 
 ### **Network Issues**
@@ -213,7 +209,7 @@ sudo docker-compose restart suricata evebox arkime
 
 ### **Quick Health Verification**
 ```bash
-# Container count (should be 30+)
+# Container count (should be ~19)
 sudo docker ps | wc -l
 
 # Portal HTTPS test
@@ -226,7 +222,7 @@ ls ./arkime/pcaps/*.pcap | wc -l
 wc -l ./suricata/logs/eve.json
 
 # All services test
-for port in 5443 7000 7001 7002 7003 7004 7005 7006 7007 7008 7009 7010 7013 7014 7015 9443; do
+for port in 5443 5500 7000 7001 7003 7005 7006 7008 7009 7015 9443; do
   nc -z localhost $port && echo "Port $port: ✅" || echo "Port $port: ❌"
 done
 ```
@@ -251,15 +247,15 @@ ip addr show
 ## 🎯 **Key Features Status**
 
 - ✅ **HTTPS Portal**: Direct access on port 5443 (authentication removed)
-- ✅ **29 Containers**: All security tools operational
+- ✅ **~20 Containers**: All security tools operational
 - ✅ **Swap Space**: 8GB configured (prevents system hanging/crashes)
 - ✅ **YARA**: 523+ malware detection rules installed
 - ✅ **Sigma**: 3,047+ universal SIEM detection rules
 - ✅ **Hunting Dashboard**: Web-based YARA/Sigma management
 - ✅ **Arkime Data**: Sample network traffic ready for analysis
 - ✅ **Suricata Events**: 50K+ security events captured
+- ✅ **Caldera**: Adversary emulation on port 7009 (admin/cyberblue)
 - ✅ **Dynamic Config**: Auto-detects network interfaces
-- ✅ **Backup System**: Complete state preservation
 - ✅ **SSL Encryption**: Automatic certificate generation
 
 ---

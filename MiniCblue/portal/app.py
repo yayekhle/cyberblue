@@ -309,6 +309,7 @@ class ContainerMonitor:
             "cortex": ["cortex", "cyber-blue-test-cortex-1"],
             "arkime": ["arkime", "arkime-test", "cyber-blue-test-arkime-1"],
             "evebox": ["evebox", "cyber-blue-test-evebox-1"],
+            "caldera": ["caldera", "cyber-blue-test-caldera-1"],
             "portainer": ["portainer", "cyber-blue-test-portainer-1"],
         }
 
@@ -352,6 +353,7 @@ class ContainerMonitor:
             "cortex": ["cortex", "cyber-blue-test-cortex-1"],
             "arkime": ["arkime", "arkime-test", "cyber-blue-test-arkime-1"],
             "evebox": ["evebox", "cyber-blue-test-evebox-1"],
+            "caldera": ["caldera", "cyber-blue-test-caldera-1"],
             "portainer": ["portainer", "cyber-blue-test-portainer-1"],
         }
 
@@ -1011,9 +1013,22 @@ def get_tools():
             "icon": "fas fa-eye",
             "category": "ids",
             "categoryName": "INTRUSION DETECTION",
-            "protocols": ["https"],
+            "protocols": ["http"],
             "credentials": {
                 "note": "No authentication required"
+            }
+        },
+        {
+            "name": "Caldera",
+            "description": "MITRE adversary emulation platform for automated red/blue team exercises and ATT&CK-based attack simulation.",
+            "port": 7009,
+            "icon": "fas fa-chess-king",
+            "category": "attack-simulation",
+            "categoryName": "ATTACK SIMULATION",
+            "protocols": ["http"],
+            "credentials": {
+                "username": "admin",
+                "password": "cyberblue"
             }
         },
         {

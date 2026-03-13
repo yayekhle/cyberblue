@@ -1,0 +1,52 @@
+ability_refresh: 60
+api_key_blue: cyberblue
+api_key_red: cyberblue
+app.contact.dns.domain: mycaldera.caldera
+app.contact.dns.socket: 0.0.0.0:8853
+app.contact.gist: ""
+app.contact.html: /weather
+app.contact.http: http://0.0.0.0:8888
+app.contact.slack.api_key: ""
+app.contact.slack.bot_id: ""
+app.contact.slack.channel_id: ""
+app.contact.tunnel.ssh.host_key_file: ""
+app.contact.tunnel.ssh.host_key_passphrase: ""
+app.contact.tunnel.ssh.socket: 0.0.0.0:8022
+app.contact.tunnel.ssh.user_name: sandcat
+app.contact.tunnel.ssh.user_password: s4ndc4t!
+app.contact.ftp.host: 0.0.0.0
+app.contact.ftp.port: 2222
+app.contact.ftp.pword: caldera
+app.contact.ftp.server.dir: ftp_dir
+app.contact.ftp.user: caldera_user
+app.contact.tcp: 0.0.0.0:7010
+app.contact.udp: 0.0.0.0:7011
+app.contact.websocket: 0.0.0.0:7012
+objects.planners.default: atomic
+crypt_salt: cyberblue-salt
+encryption_key: cyberblue-key
+exfil_dir: /tmp/caldera
+reachable_host_traits:
+  - remote.host.fqdn
+  - remote.host.ip
+host: 0.0.0.0
+port: 8888
+plugins:
+  - access
+  - atomic
+  - compass
+  - debrief
+  - fieldmanual
+  - manx
+  - response
+  - sandcat
+  - stockpile
+  - training
+reports_dir: /tmp
+auth.login.handler.module: default
+users:
+  red:
+    red: cyberblue
+    admin: cyberblue
+  blue:
+    blue: cyberblue
