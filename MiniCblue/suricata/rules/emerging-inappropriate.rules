@@ -9,7 +9,7 @@
 #  as follows:
 #
 #*************************************************************
-#  Copyright (c) 2003-2025, Emerging Threats
+#  Copyright (c) 2003-2026, Emerging Threats
 #  All rights reserved.
 #  
 #  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
@@ -68,25 +68,25 @@
 
 #alert http $EXTERNAL_NET $HTTP_PORTS -> $HOME_NET any (msg:"ET INAPPROPRIATE Kiddy Porn pthc"; flow: from_server,established; content:" pthc "; nocase; classtype:policy-violation; sid:2001386; rev:7; metadata:created_at 2010_07_30, signature_severity Unknown, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE alt.binaries.pictures.tinygirls"; flow:to_client,established; content:"alt.binaries.pictures.tinygirls"; nocase; classtype:policy-violation; sid:2101837; rev:6; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE alt.binaries.pictures.tinygirls"; flow:to_client,established; content:"alt.binaries.pictures.tinygirls"; nocase; classtype:policy-violation; sid:2101837; rev:6; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE anal sex"; flow:to_client,established; content:"anal sex"; nocase; classtype:policy-violation; sid:2101317; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE anal sex"; flow:to_client,established; content:"anal sex"; nocase; classtype:policy-violation; sid:2101317; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE fuck fuck fuck"; flow:to_client,established; content:"fuck fuck fuck"; nocase; classtype:policy-violation; sid:2101316; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hardcore anal"; flow:to_client,established; content:"hardcore anal"; nocase; classtype:policy-violation; sid:2101311; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hardcore anal"; flow:to_client,established; content:"hardcore anal"; nocase; classtype:policy-violation; sid:2101311; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hardcore rape"; flow:to_client,established; content:"hardcore rape"; nocase; classtype:policy-violation; sid:2101318; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hardcore rape"; flow:to_client,established; content:"hardcore rape"; nocase; classtype:policy-violation; sid:2101318; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hot young sex"; flow:to_client,established; content:"hot young sex"; nocase; classtype:policy-violation; sid:2101315; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE hot young sex"; flow:to_client,established; content:"hot young sex"; nocase; classtype:policy-violation; sid:2101315; rev:9; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE naked lesbians"; flow:to_client,established; content:"naked lesbians"; nocase; classtype:policy-violation; sid:2101833; rev:6; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE naked lesbians"; flow:to_client,established; content:"naked lesbians"; nocase; classtype:policy-violation; sid:2101833; rev:6; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
-
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE up skirt"; flow:to_client,established; content:"up skirt"; nocase; classtype:policy-violation; sid:2101313; rev:11; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2019_07_26;)
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE up skirt"; flow:to_client,established; content:"up skirt"; nocase; classtype:policy-violation; sid:2101313; rev:11; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2019_07_26;)
 
 #alert http $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"ET INAPPROPRIATE Google Image Search, Safe Mode Off"; flow:established,to_server; content:"&safe=off"; http_uri; content:"|0d 0a|Host|3a| images.google.com|0d 0a|"; classtype:policy-violation; sid:2002925; rev:6; metadata:created_at 2010_07_30, signature_severity Unknown, updated_at 2019_08_22;)
 
-#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE fuck movies"; flow:to_client,established; content:"fuck movies"; nocase; classtype:policy-violation; sid:2101320; rev:10; metadata:created_at 2010_09_23, signature_severity Unknown, updated_at 2022_09_21;)
-
 alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"ET INAPPROPRIATE Evil Keitaro to Adult Websites Set-Cookie Inbound (3f06b)"; flow:established,to_client; http.cookie; content:"3f06b=eyJ0e"; fast_pattern; pcre:"/^[A-Z0-9_\-.]{20,300}\x3b/Ri"; classtype:exploit-kit; sid:2063364; rev:1; metadata:attack_target Client_Endpoint, tls_state TLSDecrypt, created_at 2025_07_08, deployment Perimeter, deployment SSLDecrypt, performance_impact Low, confidence High, signature_severity Minor, tag Keitaro_TDS, tag Description_Generated_By_Proofpoint_Nexus, tag Keitaro, updated_at 2025_07_08, mitre_tactic_id TA0001, mitre_tactic_name Initial_Access, mitre_technique_id T1189, mitre_technique_name Drive_by_Compromise;)
+
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE fuck fuck fuck"; flow:to_client,established; content:"fuck fuck fuck"; nocase; classtype:policy-violation; sid:2101316; rev:10; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2025_09_15;)
+
+#alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"GPL INAPPROPRIATE fuck movies"; flow:to_client,established; content:"fuck movies"; nocase; classtype:policy-violation; sid:2101320; rev:11; metadata:created_at 2010_09_23, signature_severity Unknown, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2025_09_15;)
 

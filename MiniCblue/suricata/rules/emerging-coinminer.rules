@@ -9,7 +9,7 @@
 #  as follows:
 #
 #*************************************************************
-#  Copyright (c) 2003-2025, Emerging Threats
+#  Copyright (c) 2003-2026, Emerging Threats
 #  All rights reserved.
 #  
 #  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
@@ -70,9 +70,9 @@ alert dns $HOME_NET any -> any any (msg:"ET COINMINER Observed DNS Query to Brow
 
 alert tls $HOME_NET any -> $EXTERNAL_NET any (msg:"ET COINMINER Observed Coin-Hive In Browser Mining Domain (coin-hive .com in TLS SNI)"; flow:established,to_server; tls.sni; content:"coin-hive.com"; endswith; classtype:trojan-activity; sid:2025535; rev:3; metadata:affected_product Windows_XP_Vista_7_8_10_Server_32_64_Bit, attack_target Client_Endpoint, created_at 2018_04_26, deployment Perimeter, malware_family CoinMiner, performance_impact Moderate, confidence High, signature_severity Minor, updated_at 2020_09_16;)
 
-alert http $HOME_NET any -> $EXTERNAL_NET 8000 (msg:"ET COINMINER Win32/Ymacco.AA2F Checking (Multiple OS)"; flow:established,to_server; http.start; content:"GET /update HTTP"; fast_pattern; http.header_names; content:"|0d 0a|Host|0d 0a|Connection|0d 0a 0d 0a|"; depth:22; isdataat:!1,relative; reference:url,twitter.com/luc4m/status/1340737667961679881; classtype:coin-mining; sid:2031464; rev:2; metadata:attack_target Client_Endpoint, created_at 2020_12_29, deployment Perimeter, performance_impact Low, confidence Medium, signature_severity Minor, updated_at 2020_12_30;)
+alert http $HOME_NET any -> $EXTERNAL_NET 8000 (msg:"ET COINMINER Win32/Ymacco.AA2F Checking (Multiple OS)"; flow:established,to_server; http.start; content:"GET /update HTTP"; fast_pattern; http.header_names; content:"|0d 0a|Host|0d 0a|Connection|0d 0a 0d 0a|"; depth:22; isdataat:!1,relative; reference:url,twitter.com/luc4m/status/1340737667961679881; classtype:coin-mining; sid:2031464; rev:2; metadata:attack_target Client_Endpoint, created_at 2020_12_29, deployment Perimeter, performance_impact Low, confidence Medium, signature_severity Minor, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2020_12_30;)
 
-alert http $HOME_NET any -> $EXTERNAL_NET 8000 (msg:"ET COINMINER Win32/Ymacco.AA2F Checking (Multiple OS)"; flow:established,to_server; http.start; content:"GET /banner HTTP"; fast_pattern; http.header_names; content:"|0d 0a|Host|0d 0a|Connection|0d 0a 0d 0a|"; depth:22; isdataat:!1,relative; reference:url,twitter.com/luc4m/status/1340737667961679881; classtype:coin-mining; sid:2031465; rev:2; metadata:attack_target Client_Endpoint, created_at 2020_12_29, deployment Perimeter, performance_impact Low, confidence Medium, signature_severity Minor, updated_at 2020_12_30;)
+alert http $HOME_NET any -> $EXTERNAL_NET 8000 (msg:"ET COINMINER Win32/Ymacco.AA2F Checking (Multiple OS)"; flow:established,to_server; http.start; content:"GET /banner HTTP"; fast_pattern; http.header_names; content:"|0d 0a|Host|0d 0a|Connection|0d 0a 0d 0a|"; depth:22; isdataat:!1,relative; reference:url,twitter.com/luc4m/status/1340737667961679881; classtype:coin-mining; sid:2031465; rev:2; metadata:attack_target Client_Endpoint, created_at 2020_12_29, deployment Perimeter, performance_impact Low, confidence Medium, signature_severity Minor, tag Description_Generated_By_Proofpoint_Nexus, updated_at 2020_12_30;)
 
 alert dns $HOME_NET any -> any any (msg:"ET COINMINER Observed DNS Query to herominers Domain (herominers .com)"; dns.query; content:".herominers.com"; nocase; endswith; fast_pattern; classtype:coin-mining; sid:2033901; rev:2; metadata:attack_target Client_Endpoint, created_at 2021_09_03, deployment Perimeter, confidence High, signature_severity Major, tag Coinminer, updated_at 2021_09_03, mitre_tactic_id TA0040, mitre_tactic_name Impact, mitre_technique_id T1496, mitre_technique_name Resource_Hijacking;)
 
