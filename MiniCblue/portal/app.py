@@ -11,11 +11,16 @@ import logging
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
 from flask_cors import CORS
+from flask_login import current_user, login_user, logout_user, login_required
 import threading
 import time
 import signal
 import sys
 import ssl
+
+# Import authentication modules
+from auth import init_auth
+from forms import LoginForm
 
 # Configure logging
 logging.basicConfig(
@@ -30,6 +35,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize authentication
+auth_manager = init_auth(app)
 
 # Configuration
 PORT = int(os.environ.get('PORT', 5500))
@@ -443,16 +451,102 @@ changelog_manager = ChangelogManager(CHANGELOG_FILE)
 container_monitor = ContainerMonitor(changelog_manager)
 
 
-@app.route('/')
-def index():
-    """Main portal page - no authentication required"""
+@app.before_request
+def require_login_for_portal():
+    """Require login for all portal pages and APIs except public endpoints."""
+    if request.endpoint is None:
+        return None
+
+    public_endpoints = {'login', 'get_auth_token', 'health', 'static'}
+    if request.endpoint in public_endpoints:
+        return None
+
+    if current_user.is_authenticated:
+        return None
+
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Authentication required'}), 401
+
+    return redirect(url_for('login', next=request.url))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        user = auth_manager.authenticate_user(form.username.data, form.password.data)
+        if user:
+            login_user(user, remember=form.remember_me.data)
+            changelog_manager.add_entry(
+                action="user_login",
+                details=f"User '{user.username}' logged in successfully",
+                user=user.username,
+                level="info"
+            )
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+
+        flash('Invalid username or password', 'error')
+        changelog_manager.add_entry(
+            action="login_failed",
+            details=f"Failed login attempt for username '{form.username.data}'",
+            user="anonymous",
+            level="warning"
+        )
+
+    return render_template('login.html', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout current user"""
+    username = current_user.username
+    logout_user()
     changelog_manager.add_entry(
-        action="portal_access",
-        details="Portal accessed",
-        user="anonymous",
+        action="user_logout",
+        details=f"User '{username}' logged out",
+        user=username,
         level="info"
     )
-    return render_template('index.html')
+    flash('You have been logged out successfully', 'success')
+    return redirect(url_for('login'))
+
+
+@app.route('/api/auth/token', methods=['POST'])
+def get_auth_token():
+    """Issue JWT token for API clients."""
+    data = request.get_json()
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'error': 'Username and password required'}), 400
+
+    user = auth_manager.authenticate_user(data['username'], data['password'])
+    if not user:
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    token = auth_manager.generate_jwt_token(user)
+    return jsonify({
+        'token': token,
+        'user': user.to_dict(),
+        'expires_in': 86400
+    })
+
+
+@app.route('/')
+def index():
+    """Main portal page - requires authentication"""
+    changelog_manager.add_entry(
+        action="portal_access",
+        details=f"User '{current_user.username}' accessed the portal",
+        user=current_user.username,
+        level="info"
+    )
+    return render_template('index.html', user=current_user)
 
 
 @app.route('/api/containers')
