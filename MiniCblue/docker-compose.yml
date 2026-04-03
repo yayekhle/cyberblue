@@ -57,7 +57,7 @@ services:
       - SSL_CERT_PATH=/app/ssl/cert.pem
       - SSL_KEY_PATH=/app/ssl/key.pem
       - SECRET_KEY=cyberblue-secure-secret-key-change-in-production
-      - ADMIN_PASSWORD=cyberblue123
+      - ADMIN_PASSWORD=na9ana9a123
     restart: unless-stopped
     networks:
       - cyber-blue
