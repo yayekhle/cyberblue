@@ -117,7 +117,7 @@ class AuthManager:
 
     def create_default_admin(self):
         """Create default admin user"""
-        admin_password = os.environ.get('ADMIN_PASSWORD', 'cyberblue123')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'na9ana9a123')
         password_hash = bcrypt.hashpw(admin_password.encode(
             'utf-8'), bcrypt.gensalt()).decode('utf-8')
 
